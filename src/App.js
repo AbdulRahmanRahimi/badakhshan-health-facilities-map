@@ -210,7 +210,7 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
         map.options.maxBoundsViscosity = 0.6;
 
         map.setMinZoom(7);
-        map.setMaxZoom(14);
+        map.setMaxZoom(20);
         return;
       }
     }
