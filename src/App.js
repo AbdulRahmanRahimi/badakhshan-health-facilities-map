@@ -217,7 +217,7 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
 
     map.setView(fallbackCenter, fallbackZoom);
     map.setMinZoom(6);
-    map.setMaxZoom(20);
+    map.setMaxZoom(18);
   }, [provinceGeo, fallbackCenter, fallbackZoom, map]);
 
   return null;
