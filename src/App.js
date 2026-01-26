@@ -49,10 +49,12 @@ const cleanHeader = (h) =>
   String(h || "")
     .replace(/^\uFEFF/, "")
     .trim();
+
 const toNumber = (v) => {
   const n = Number(String(v ?? "").trim());
   return Number.isFinite(n) ? n : null;
 };
+
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
 function findColumnByHints(columns, hints) {
@@ -100,7 +102,6 @@ function getFeatureId(f, fallbackIndex = 0) {
 
 /* =========================
    COLORFUL SYMBOL ICONS
-   -> Shapes + colors
 ========================= */
 const TYPE_STYLE = {
   BHC: { fill: "#1f77b4" },
@@ -199,13 +200,8 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
       if (b.isValid()) {
         map.fitBounds(b, { padding: [40, 40] });
 
-        // ✅ allow panning a bit outside Badakhshan
-        const pad = 0.35; // try 0.25 / 0.35 / 0.50
-        const expanded = L.latLngBounds(
-          [b.getSouthWest().lat - pad, b.getSouthWest().lng - pad],
-          [b.getNorthEast().lat + pad, b.getNorthEast().lng + pad]
-        );
-
+        // ✅ allow panning a bit outside Badakhshan (clean way)
+        const expanded = b.pad(0.35);
         map.setMaxBounds(expanded);
         map.options.maxBoundsViscosity = 0.6;
 
@@ -224,7 +220,7 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
 }
 
 /* =========================
-   UI Components
+   UI Helpers
 ========================= */
 function TitleBar() {
   return (
@@ -292,18 +288,32 @@ function chipStyle(extra = {}) {
   };
 }
 
-/* Interactive legend with counts */
-function Legend({ types, typeCounts, selectedTypes, onToggleType }) {
-  const preferred = [
-    "BHC",
-    "SHC",
-    "CHC",
-    "CHC+",
-    "DH",
-    "PH",
-    "Other",
-    "Unknown",
-  ];
+function smallToggleBtn() {
+  return {
+    border: "1px solid rgba(0,0,0,0.18)",
+    background: "white",
+    borderRadius: 12,
+    padding: "10px 12px",
+    cursor: "pointer",
+    fontFamily: "Arial",
+    fontWeight: 900,
+    fontSize: 12,
+    boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+  };
+}
+
+/* =========================
+   Legend (collapsible)
+========================= */
+function Legend({
+  types,
+  typeCounts,
+  selectedTypes,
+  onToggleType,
+  minimized,
+  onToggleMinimize,
+}) {
+  const preferred = ["BHC", "SHC", "CHC", "CHC+", "DH", "PH", "Other", "Unknown"];
   const order = preferred.filter((t) => types.includes(t));
 
   return (
@@ -313,94 +323,124 @@ function Legend({ types, typeCounts, selectedTypes, onToggleType }) {
         bottom: 14,
         left: 14,
         zIndex: 9999,
-        background: "white",
-        border: "1px solid rgba(0,0,0,0.15)",
-        borderRadius: 14,
-        padding: "10px 12px",
-        width: 320,
-        boxShadow: "0 2px 16px rgba(0,0,0,0.12)",
         fontFamily: "Arial",
-        fontSize: 13,
       }}
     >
-      <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}>
-        Legend (click to filter)
-      </div>
-
-      <div style={{ marginBottom: 8, color: "#333", fontWeight: 800 }}>
-        Facility Type (Symbol + Color)
-      </div>
-
-      {order.map((t) => {
-        const active = selectedTypes.has(t);
-        const count = typeCounts[t] || 0;
-        return (
-          <button
-            key={t}
-            onClick={() => onToggleType(t)}
-            type="button"
+      {minimized ? (
+        <button type="button" onClick={onToggleMinimize} style={smallToggleBtn()}>
+          Show legend
+        </button>
+      ) : (
+        <div
+          style={{
+            background: "white",
+            border: "1px solid rgba(0,0,0,0.15)",
+            borderRadius: 14,
+            padding: "10px 12px",
+            width: 320,
+            boxShadow: "0 2px 16px rgba(0,0,0,0.12)",
+            fontSize: 13,
+          }}
+        >
+          <div
             style={{
-              width: "100%",
               display: "flex",
-              alignItems: "center",
               justifyContent: "space-between",
+              alignItems: "center",
               gap: 10,
-              padding: "8px 8px",
-              margin: "4px 0",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.15)",
-              cursor: "pointer",
-              background: active ? "rgba(0,0,0,0.06)" : "white",
+              marginBottom: 8,
             }}
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
-              <div style={{ fontWeight: 900 }}>{t}</div>
+            <div style={{ fontWeight: 900, fontSize: 14 }}>
+              Legend (click to filter)
             </div>
-            <div style={{ fontWeight: 900, color: "#111" }}>{count}</div>
-          </button>
-        );
-      })}
+            <button
+              type="button"
+              onClick={onToggleMinimize}
+              style={btn("outline")}
+            >
+              Minimize
+            </button>
+          </div>
 
-      <hr style={{ margin: "10px 0" }} />
+          <div style={{ marginBottom: 8, color: "#333", fontWeight: 800 }}>
+            Facility Type (Symbol + Color)
+          </div>
 
-      <div style={{ fontWeight: 900, marginBottom: 6 }}>Boundaries</div>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          marginBottom: 6,
-        }}
-      >
-        <div style={{ width: 26, height: 6, background: "red" }} />
-        <div style={{ fontWeight: 800 }}>Province boundary</div>
-      </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{ width: 26, height: 6, background: "blue" }} />
-        <div style={{ fontWeight: 800 }}>District boundary</div>
-      </div>
+          {order.map((t) => {
+            const active = selectedTypes.has(t);
+            const count = typeCounts[t] || 0;
+            return (
+              <button
+                key={t}
+                onClick={() => onToggleType(t)}
+                type="button"
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  padding: "8px 8px",
+                  margin: "4px 0",
+                  borderRadius: 12,
+                  border: "1px solid rgba(0,0,0,0.15)",
+                  cursor: "pointer",
+                  background: active ? "rgba(0,0,0,0.06)" : "white",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
+                  <div style={{ fontWeight: 900 }}>{t}</div>
+                </div>
+                <div style={{ fontWeight: 900, color: "#111" }}>{count}</div>
+              </button>
+            );
+          })}
 
-      <hr style={{ margin: "10px 0" }} />
+          <hr style={{ margin: "10px 0" }} />
 
-      <div style={{ fontWeight: 900, marginBottom: 4 }}>Coverage buffers</div>
-      <div style={{ color: "#444", lineHeight: 1.35 }}>
-        Radius scales with villages covered (sqrt scaling, capped).
-      </div>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>Boundaries</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{ width: 26, height: 6, background: "red" }} />
+            <div style={{ fontWeight: 800 }}>Province boundary</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 26, height: 6, background: "blue" }} />
+            <div style={{ fontWeight: 800 }}>District boundary</div>
+          </div>
+
+          <hr style={{ margin: "10px 0" }} />
+
+          <div style={{ fontWeight: 900, marginBottom: 4 }}>Coverage buffers</div>
+          <div style={{ color: "#444", lineHeight: 1.35 }}>
+            Radius scales with villages covered (sqrt scaling, capped).
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
+/* =========================
+   Sidebar (collapsible)
+========================= */
 function Sidebar({
+  minimized,
+  onToggleMinimize,
+
   search,
   setSearch,
   results,
   onSelectResult,
+
   types,
   selectedTypes,
   setSelectedTypes,
+
   basemap,
   setBasemap,
+
   showBuffers,
   setShowBuffers,
   showBufferLabels,
@@ -409,6 +449,7 @@ function Sidebar({
   setShowFacilityLabels,
   showDistrictLabels,
   setShowDistrictLabels,
+
   zoom,
   selectedDistrictSummary,
   onClearDistrict,
@@ -420,8 +461,23 @@ function Sidebar({
     setSelectedTypes(next);
   };
 
-  const selectAll = () => setSelectedTypes(new Set(types));
-  const clearAll = () => setSelectedTypes(new Set());
+  if (minimized) {
+    return (
+      <div
+        style={{
+          position: "absolute",
+          top: 10,
+          right: 10,
+          zIndex: 9999,
+          fontFamily: "Arial",
+        }}
+      >
+        <button type="button" onClick={onToggleMinimize} style={smallToggleBtn()}>
+          Show controls
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -441,8 +497,19 @@ function Sidebar({
       }}
     >
       <div style={{ padding: 12 }}>
-        <div style={{ fontSize: 15, fontWeight: 900, marginBottom: 10 }}>
-          Controls
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            gap: 10,
+            marginBottom: 10,
+          }}
+        >
+          <div style={{ fontSize: 15, fontWeight: 900 }}>Controls</div>
+          <button type="button" onClick={onToggleMinimize} style={btn("outline")}>
+            Minimize
+          </button>
         </div>
 
         <div
@@ -594,9 +661,7 @@ function Sidebar({
             </button>
           </div>
 
-          <div
-            style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
             {types.map((t) => (
               <button
                 key={t}
@@ -624,53 +689,30 @@ function Sidebar({
                 background: "rgba(0,0,0,0.03)",
               }}
             >
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  gap: 10,
-                }}
-              >
-                <div style={{ fontWeight: 900 }}>
-                  {selectedDistrictSummary.name}
-                </div>
-                <button
-                  type="button"
-                  onClick={onClearDistrict}
-                  style={btn("outline")}
-                >
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                <div style={{ fontWeight: 900 }}>{selectedDistrictSummary.name}</div>
+                <button type="button" onClick={onClearDistrict} style={btn("outline")}>
                   Clear
                 </button>
               </div>
 
               <div style={{ marginTop: 8, fontSize: 12, color: "#333" }}>
-                Facilities: <b>{selectedDistrictSummary.facilityCount}</b> •
-                Villages sum: <b>{selectedDistrictSummary.villagesSum}</b>
+                Facilities: <b>{selectedDistrictSummary.facilityCount}</b> • Villages sum:{" "}
+                <b>{selectedDistrictSummary.villagesSum}</b>
               </div>
 
               <div style={{ marginTop: 10, fontSize: 12 }}>
                 <div style={{ fontWeight: 900, marginBottom: 6 }}>By type</div>
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns: "1fr 1fr",
-                    gap: 6,
-                  }}
-                >
-                  {Object.entries(selectedDistrictSummary.byType).map(
-                    ([k, v]) => (
-                      <div
-                        key={k}
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <span style={{ fontWeight: 800 }}>{k}</span>
-                        <span style={{ fontWeight: 900 }}>{v}</span>
-                      </div>
-                    )
-                  )}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                  {Object.entries(selectedDistrictSummary.byType).map(([k, v]) => (
+                    <div
+                      key={k}
+                      style={{ display: "flex", justifyContent: "space-between" }}
+                    >
+                      <span style={{ fontWeight: 800 }}>{k}</span>
+                      <span style={{ fontWeight: 900 }}>{v}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -708,10 +750,14 @@ export default function App() {
   const [showFacilityLabels, setShowFacilityLabels] = useState(false);
   const [showDistrictLabels, setShowDistrictLabels] = useState(true);
 
-  // Zoom state for smart display
+  // Collapsible panels
+  const [sidebarMinimized, setSidebarMinimized] = useState(false);
+  const [legendMinimized, setLegendMinimized] = useState(false);
+
+  // Zoom state
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
 
-  // Marker refs for search -> open popup
+  // Marker refs
   const markerRefs = useRef(new Map());
   const mapRef = useRef(null);
 
@@ -764,11 +810,7 @@ export default function App() {
         /facility code/i,
         /code/i,
       ]),
-      villagesCol: findColumnByHints(cols, [
-        /villag/i,
-        /cover.*vill/i,
-        /no.*vill/i,
-      ]),
+      villagesCol: findColumnByHints(cols, [/villag/i, /cover.*vill/i, /no.*vill/i]),
     };
   }, [rows]);
 
@@ -776,18 +818,13 @@ export default function App() {
   const { pointsAfghanistan, excludedOutliers } = useMemo(() => {
     if (!rows.length) return { pointsAfghanistan: [], excludedOutliers: 0 };
 
-    const {
-      latCol,
-      lonCol,
-      typeCol,
-      nameCol,
-      districtCol,
-      hfCodeCol,
-      villagesCol,
-    } = meta;
+    const { latCol, lonCol, typeCol, nameCol, districtCol, hfCodeCol, villagesCol } =
+      meta;
 
     let id = 0;
     let excluded = 0;
+
+    const known = ["BHC", "CHC", "CHC+", "DH", "SHC", "PH", "OTHER", "UNKNOWN"];
 
     const pts = rows
       .map((r) => {
@@ -806,9 +843,11 @@ export default function App() {
           return null;
         }
 
-        const typeRaw = (r[typeCol] ?? "Unknown").toString().trim();
-        const known = ["BHC", "CHC", "CHC+", "DH", "SHC", "PH", "Other"];
-        const type = known.includes(typeRaw) ? typeRaw : typeRaw || "Unknown";
+        const raw = String(r[typeCol] ?? "").trim().toUpperCase().replace(/\s+/g, "");
+        let type = raw || "UNKNOWN";
+        if (!known.includes(type)) type = "UNKNOWN";
+        if (type === "OTHER") type = "Other";
+        if (type === "UNKNOWN") type = "Unknown";
 
         const name = (r[nameCol] ?? "Facility").toString().trim();
         const district = districtCol ? String(r[districtCol] ?? "").trim() : "";
@@ -834,8 +873,6 @@ export default function App() {
 
   /* =========================
      GeoJSON FIX (Badakhshan)
-     - GeoBoundaries ADM2 does not reliably include province field
-     - So we choose correct district polygons using facility points (point-in-polygon)
   ========================= */
   useEffect(() => {
     if (!pointsAfghanistan.length) return;
@@ -847,7 +884,6 @@ export default function App() {
         const features = adm2?.features || [];
         if (!features.length) return;
 
-        // Index by normalized shapeName
         const index = new Map(); // normName -> [featureIndex]
         features.forEach((f, i) => {
           const nm = normName(f?.properties?.shapeName);
@@ -855,8 +891,6 @@ export default function App() {
           index.get(nm).push(i);
         });
 
-        // Map your CSV district names -> geoBoundaries spellings
-        // (fixes spelling differences and merges darwaz split)
         const DISTRICT_MAP = {
           Arghanjowa: ["Arghanj Khaw"],
           Argo: ["Argo"],
@@ -888,7 +922,6 @@ export default function App() {
           Zebak: ["Zebak"],
         };
 
-        // Group points by CSV district name
         const grouped = new Map();
         for (const p of pointsAfghanistan) {
           const d = p._district || "";
@@ -910,7 +943,6 @@ export default function App() {
 
           if (!candidateIndexes.length) continue;
 
-          // Score each candidate polygon by how many facility points fall inside
           const score = new Map();
           candidateIndexes.forEach((i) => score.set(i, 0));
 
@@ -929,7 +961,6 @@ export default function App() {
               }
             }
 
-            // fallback: nearest centroid
             if (matched === null) {
               let best = candidateIndexes[0];
               let bestD = Infinity;
@@ -967,10 +998,7 @@ export default function App() {
           .map((i) => features[i])
           .filter(Boolean);
 
-        const badDistrictsFC = {
-          type: "FeatureCollection",
-          features: badDistricts,
-        };
+        const badDistrictsFC = { type: "FeatureCollection", features: badDistricts };
         setDistrictsGeo(badDistrictsFC);
 
         // Province outline: dissolve/union
@@ -1015,15 +1043,12 @@ export default function App() {
     })();
   }, [pointsAfghanistan]);
 
-  /* Keep only facilities inside Badakhshan province polygon (true filter) */
+  /* Keep only facilities inside Badakhshan polygon */
   const pointsBadakhshan = useMemo(() => {
     if (!provinceGeo) return pointsAfghanistan;
     return pointsAfghanistan.filter((p) => {
       try {
-        return turf.booleanPointInPolygon(
-          turf.point([p.lon, p.lat]),
-          provinceGeo
-        );
+        return turf.booleanPointInPolygon(turf.point([p.lon, p.lat]), provinceGeo);
       } catch {
         return true;
       }
@@ -1033,16 +1058,7 @@ export default function App() {
   /* Types & counts */
   const types = useMemo(() => {
     const set = new Set(pointsBadakhshan.map((p) => p._type || "Unknown"));
-    const preferred = [
-      "BHC",
-      "SHC",
-      "CHC",
-      "CHC+",
-      "DH",
-      "PH",
-      "Other",
-      "Unknown",
-    ];
+    const preferred = ["BHC", "SHC", "CHC", "CHC+", "DH", "PH", "Other", "Unknown"];
     const arr = Array.from(set);
     arr.sort((a, b) => preferred.indexOf(a) - preferred.indexOf(b));
     return arr;
@@ -1050,14 +1066,17 @@ export default function App() {
 
   const typeCounts = useMemo(() => {
     const counts = {};
-    for (const p of pointsBadakhshan)
-      counts[p._type] = (counts[p._type] || 0) + 1;
+    for (const p of pointsBadakhshan) counts[p._type] = (counts[p._type] || 0) + 1;
     return counts;
   }, [pointsBadakhshan]);
 
   const [selectedTypes, setSelectedTypes] = useState(new Set());
+  const didInitTypes = useRef(false);
   useEffect(() => {
-    if (types.length) setSelectedTypes(new Set(types));
+    if (!didInitTypes.current && types.length) {
+      setSelectedTypes(new Set(types));
+      didInitTypes.current = true;
+    }
   }, [types]);
 
   /* Smart display rules */
@@ -1071,8 +1090,7 @@ export default function App() {
     if (!q) return [];
     return pointsBadakhshan
       .filter((p) => {
-        const hay =
-          `${p._name} ${p._district} ${p._hfCode} ${p._type}`.toLowerCase();
+        const hay = `${p._name} ${p._district} ${p._hfCode} ${p._type}`.toLowerCase();
         return hay.includes(q);
       })
       .slice(0, 10);
@@ -1084,8 +1102,7 @@ export default function App() {
     return pointsBadakhshan.filter((p) => {
       if (selectedTypes.size && !selectedTypes.has(p._type)) return false;
       if (!q) return true;
-      const hay =
-        `${p._name} ${p._district} ${p._hfCode} ${p._type}`.toLowerCase();
+      const hay = `${p._name} ${p._district} ${p._hfCode} ${p._type}`.toLowerCase();
       return hay.includes(q);
     });
   }, [pointsBadakhshan, selectedTypes, search]);
@@ -1133,13 +1150,19 @@ export default function App() {
   /* District click -> summary */
   const onEachDistrict = (feature, layer) => {
     const name = getDistrictNameFromFeature(feature);
-    if (name && effectiveShowDistrictLabels) {
-      layer.bindTooltip(String(name), {
-        permanent: true,
-        direction: "center",
-        className: "district-label",
-        opacity: 0.9,
-      });
+
+    // Tooltip behavior: bind/unbind cleanly to reduce flicker
+    if (effectiveShowDistrictLabels && name) {
+      if (!layer.getTooltip()) {
+        layer.bindTooltip(String(name), {
+          permanent: true,
+          direction: "center",
+          className: "district-label",
+          opacity: 0.9,
+        });
+      }
+    } else {
+      if (layer.getTooltip()) layer.unbindTooltip();
     }
 
     layer.on("click", () => {
@@ -1153,24 +1176,12 @@ export default function App() {
         );
 
         const byType = {};
-        for (const t of [
-          "BHC",
-          "SHC",
-          "CHC",
-          "CHC+",
-          "DH",
-          "PH",
-          "Other",
-          "Unknown",
-        ]) {
+        for (const t of ["BHC", "SHC", "CHC", "CHC+", "DH", "PH", "Other", "Unknown"]) {
           if (types.includes(t)) byType[t] = 0;
         }
         for (const p of inside) byType[p._type] = (byType[p._type] || 0) + 1;
 
-        const villagesSum = inside.reduce(
-          (s, p) => s + (toNumber(p._villages) || 0),
-          0
-        );
+        const villagesSum = inside.reduce((s, p) => s + (toNumber(p._villages) || 0), 0);
 
         setSelectedDistrictSummary({
           id,
@@ -1200,6 +1211,9 @@ export default function App() {
       fillColor: selected ? "blue" : "transparent",
     };
   };
+
+  // Optional: reduce heavy buffer rendering at low zoom
+  const effectiveShowBuffers = showBuffers && zoom >= 9;
 
   if (loading) {
     return <div style={{ fontFamily: "Arial", padding: 16 }}>Loading…</div>;
@@ -1256,7 +1270,10 @@ export default function App() {
         )}
       </div>
 
+      {/* Collapsible Controls Sidebar */}
       <Sidebar
+        minimized={sidebarMinimized}
+        onToggleMinimize={() => setSidebarMinimized((s) => !s)}
         search={search}
         setSearch={setSearch}
         results={searchResults}
@@ -1279,7 +1296,10 @@ export default function App() {
         onClearDistrict={clearDistrict}
       />
 
+      {/* Collapsible Legend */}
       <Legend
+        minimized={legendMinimized}
+        onToggleMinimize={() => setLegendMinimized((s) => !s)}
         types={types}
         typeCounts={typeCounts}
         selectedTypes={selectedTypes}
@@ -1305,7 +1325,6 @@ export default function App() {
         {/* District boundaries (BLUE) */}
         {districtsGeo && (
           <GeoJSON
-            key={`districts-${effectiveShowDistrictLabels}-${selectedDistrictId}`}
             data={districtsGeo}
             style={districtStyle}
             onEachFeature={onEachDistrict}
@@ -1314,14 +1333,11 @@ export default function App() {
 
         {/* Province outline (RED) on top */}
         {provinceGeo && (
-          <GeoJSON
-            data={provinceGeo}
-            style={{ color: "red", weight: 4, fillOpacity: 0 }}
-          />
+          <GeoJSON data={provinceGeo} style={{ color: "red", weight: 4, fillOpacity: 0 }} />
         )}
 
-        {/* Buffers (outside clusters) */}
-        {showBuffers &&
+        {/* Buffers */}
+        {effectiveShowBuffers &&
           pointsFiltered.map((p) => {
             const villages = toNumber(p._villages);
             const radius = bufferRadiusMeters(villages);
@@ -1370,7 +1386,10 @@ export default function App() {
                 key={`m-${p._id}`}
                 position={[p.lat, p.lon]}
                 icon={icon}
-                ref={(ref) => ref && markerRefs.current.set(p._id, ref)}
+                ref={(ref) => {
+                  if (ref) markerRefs.current.set(p._id, ref);
+                  else markerRefs.current.delete(p._id);
+                }}
               >
                 {/* Facility name label (smart) */}
                 {effectiveShowFacilityLabels && (
@@ -1394,50 +1413,36 @@ export default function App() {
                       minWidth: 260,
                     }}
                   >
-                    <div
-                      style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}
-                    >
+                    <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}>
                       {p._name}
                     </div>
 
-                    <table
-                      style={{ width: "100%", borderCollapse: "collapse" }}
-                    >
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <tbody>
                         <tr>
-                          <td style={{ fontWeight: 900, paddingRight: 8 }}>
-                            Type
-                          </td>
+                          <td style={{ fontWeight: 900, paddingRight: 8 }}>Type</td>
                           <td>{p._type}</td>
                         </tr>
                         {p._hfCode ? (
                           <tr>
-                            <td style={{ fontWeight: 900, paddingRight: 8 }}>
-                              HF Code
-                            </td>
+                            <td style={{ fontWeight: 900, paddingRight: 8 }}>HF Code</td>
                             <td>{p._hfCode}</td>
                           </tr>
                         ) : null}
                         {p._district ? (
                           <tr>
-                            <td style={{ fontWeight: 900, paddingRight: 8 }}>
-                              District
-                            </td>
+                            <td style={{ fontWeight: 900, paddingRight: 8 }}>District</td>
                             <td>{p._district}</td>
                           </tr>
                         ) : null}
                         {villages !== null ? (
                           <tr>
-                            <td style={{ fontWeight: 900, paddingRight: 8 }}>
-                              Villages
-                            </td>
+                            <td style={{ fontWeight: 900, paddingRight: 8 }}>Villages</td>
                             <td>{Math.round(villages)}</td>
                           </tr>
                         ) : null}
                         <tr>
-                          <td style={{ fontWeight: 900, paddingRight: 8 }}>
-                            Lat/Lon
-                          </td>
+                          <td style={{ fontWeight: 900, paddingRight: 8 }}>Lat/Lon</td>
                           <td>
                             {p.lat.toFixed(5)}, {p.lon.toFixed(5)}
                           </td>
