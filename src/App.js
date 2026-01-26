@@ -475,9 +475,9 @@ function ControlDrawer({
   onClearDistrict,
 }) {
   const [secSearch, setSecSearch] = useState(true);
-  const [secMap, setSecMap] = useState(true);
+  const [secMap, setSecMap] = useState(false);
   const [secLayers, setSecLayers] = useState(true);
-  const [secTypes, setSecTypes] = useState(true);
+  const [secTypes, setSecTypes] = useState(false);
   const [secDistrict, setSecDistrict] = useState(false);
 
   useEffect(() => {
@@ -554,61 +554,71 @@ function ControlDrawer({
             overscrollBehavior: "contain",
           }}
         >
-          <Accordion
-          title="Search & jump"
-          open={secSearch}
-          onToggle={() => setSecSearch((s) => !s)}>
-          <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
-            Search facility name, district, HF code, or type.
+      <Accordion
+  title="Search & jump"
+  open={secSearch}
+  onToggle={() => setSecSearch((s) => !s)}
+>
+  <div style={{ display: "grid", gap: 8 }}>
+    <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+      Search facility name, district, HF code, or type.
+    </div>
+
+    <input
+      value={search}
+      onChange={(e) => setSearch(e.target.value)}
+      placeholder="Type to search..."
+      style={{
+        width: "100%",
+        boxSizing: "border-box",
+        height: 42,
+        padding: "0 12px",
+        borderRadius: 14,
+        border: "1px solid rgba(0,0,0,0.22)",
+        background: "white",
+        outline: "none",
+        fontFamily: "Arial",
+        fontWeight: 800,
+        fontSize: 13,
+      }}
+    />
+  </div>
+
+  {search.trim() && results.length > 0 && (
+    <div
+      style={{
+        marginTop: 10,
+        border: "1px solid rgba(0,0,0,0.12)",
+        borderRadius: 14,
+        overflow: "hidden",
+      }}
+    >
+      {results.map((r) => (
+        <button
+          key={r._id}
+          type="button"
+          onClick={() => onSelectResult(r)}
+          style={{
+            width: "100%",
+            textAlign: "left",
+            padding: "10px 12px",
+            border: "none",
+            background: "white",
+            cursor: "pointer",
+            borderBottom: "1px solid rgba(0,0,0,0.08)",
+            fontFamily: "Arial",
+          }}
+        >
+          <div style={{ fontWeight: 900, fontSize: 13 }}>{r._name}</div>
+          <div style={{ fontSize: 12, color: "#555", fontWeight: 800 }}>
+            {r._type} • {r._district || "—"} • {r._hfCode || "—"}
           </div>
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Type to search..."
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.22)",
-              outline: "none",
-              marginTop: 8,
-              fontFamily: "Arial",
-              fontWeight: 800,
-            }}/>
-          {search.trim() && results.length > 0 && (
-            <div
-              style={{
-                marginTop: 10,
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 14,
-                overflow: "hidden",
-              }}
-            >
-              {results.map((r) => (
-                <button
-                  key={r._id}
-                  type="button"
-                  onClick={() => onSelectResult(r)}
-                  style={{
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "10px 12px",
-                    border: "none",
-                    background: "white",
-                    cursor: "pointer",
-                    borderBottom: "1px solid rgba(0,0,0,0.08)",
-                    fontFamily: "Arial",
-                  }}
-                >
-                  <div style={{ fontWeight: 900, fontSize: 13 }}>{r._name}</div>
-                  <div style={{ fontSize: 12, color: "#555", fontWeight: 800 }}>
-                    {r._type} • {r._district || "—"} • {r._hfCode || "—"}
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </Accordion>
+        </button>
+      ))}
+    </div>
+  )}
+</Accordion>
+
 
         <Accordion title="Map" open={secMap} onToggle={() => setSecMap((s) => !s)}>
           <div style={{ display: "grid", gap: 10 }}>
