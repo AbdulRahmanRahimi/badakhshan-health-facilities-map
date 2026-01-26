@@ -885,18 +885,25 @@ function LegendPanel({
   return (
     <div
       style={{
-        position: "absolute",
-        left: 10,
-        bottom: 10,
-        width: 360,
-        zIndex: 10001,
-        background: "rgba(255,255,255,0.97)",
-        border: "1px solid rgba(0,0,0,0.12)",
-        borderRadius: 18,
-        boxShadow: "0 2px 22px rgba(0,0,0,0.16)",
-        overflow: "hidden",
-        fontFamily: "Arial",
-      }}
+  position: "absolute",
+  left: 10,
+  bottom: 10,
+
+  width: "clamp(240px, 30vw, 360px)",   // ✅ responsive width (shrinks on laptop)
+  maxWidth: "calc(100vw - 20px)",       // ✅ never overflow the screen
+  maxHeight: "calc(100vh - 120px)",     // ✅ fit under top bar
+  display: "flex",
+  flexDirection: "column",
+
+  zIndex: 10001,
+  background: "rgba(255,255,255,0.97)",
+  border: "1px solid rgba(0,0,0,0.12)",
+  borderRadius: 18,
+  boxShadow: "0 2px 22px rgba(0,0,0,0.16)",
+  overflow: "hidden",
+  fontFamily: "Arial",
+}}
+
     >
       <div
         style={{
@@ -919,10 +926,20 @@ function LegendPanel({
         </IconButton>
       </div>
 
-      <div style={{ padding: 12 }}>
-        <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 10 }}>
-          Facility type (symbol + count)
-        </div>
+     <div
+          onWheel={(e) => e.stopPropagation()}
+          style={{
+            padding: 12,
+            overflowY: "auto",   // ✅ scroll INSIDE legend content
+            overflowX: "hidden",
+            flex: 1,             // ✅ use remaining height under header
+            minHeight: 0,        // ✅ important for flex scrolling
+          }}
+        >
+          <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 10 }}>
+            Facility type (symbol + count)
+          </div>
+
 
         <div style={{ display: "grid", gap: 8 }}>
           {order.map((t) => {
