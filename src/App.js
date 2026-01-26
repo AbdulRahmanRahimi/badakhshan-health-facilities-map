@@ -1581,15 +1581,25 @@ export default function App() {
     key={`districts-${selectedDistrictId}-${effectiveShowDistrictLabels}`}
     data={districtsGeo}
     style={districtStyle}
-    onEachFeature={onEachDistrict}
+    onEachFeature={(feature, layer) => {
+      layer.options.interactive = true; // ✅
+      onEachDistrict(feature, layer);
+    }}
   />
 )}
 
 
+
         {/* Province outline */}
         {provinceGeo && (
-          <GeoJSON data={provinceGeo} style={{ color: "red", weight: 4, fillOpacity: 0 }} />
-        )}
+  <GeoJSON
+    data={provinceGeo}
+    style={{ color: "red", weight: 4, fillOpacity: 0 }}
+    interactive={false}     // ✅ IMPORTANT
+    bubblingMouseEvents={false}
+  />
+)}
+
 
         {/* Buffers */}
         {effectiveShowBuffers &&
