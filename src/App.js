@@ -1389,15 +1389,22 @@ export default function App() {
   };
 
   const districtStyle = (feature, idx) => {
-    const id = getFeatureId(feature, idx);
-    const selected = String(id) === String(selectedDistrictId);
-    return {
-      color: "blue",
-      weight: selected ? 3.2 : 1.2,
-      fillOpacity: selected ? 0.08 : 0,
-      fillColor: selected ? "blue" : "transparent",
-    };
+  const id = getFeatureId(feature, idx);
+  const selected = String(id) === String(selectedDistrictId);
+
+  return {
+    color: "blue",
+    weight: selected ? 3.2 : 1.4,
+
+    // ✅ IMPORTANT: keep a small fill so the polygon interior catches clicks
+    fillColor: "blue",
+    fillOpacity: selected ? 0.10 : 0.04,
+
+    // ✅ make sure it is clickable
+    interactive: true,
   };
+};
+
 
   /* Active filter chips for TopBar */
   const activeChips = useMemo(() => {
@@ -1569,9 +1576,15 @@ export default function App() {
         />
 
         {/* District boundaries */}
-        {districtsGeo && (
-          <GeoJSON data={districtsGeo} style={districtStyle} onEachFeature={onEachDistrict} />
-        )}
+       {districtsGeo && (
+  <GeoJSON
+    key={`districts-${selectedDistrictId}-${effectiveShowDistrictLabels}`}
+    data={districtsGeo}
+    style={districtStyle}
+    onEachFeature={onEachDistrict}
+  />
+)}
+
 
         {/* Province outline */}
         {provinceGeo && (
