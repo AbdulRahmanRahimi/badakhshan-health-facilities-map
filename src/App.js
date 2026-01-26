@@ -534,29 +534,28 @@ function ControlDrawer({
         </IconButton>
       </div>
 
+        {/* Drawer body */}
       {/* Drawer body */}
-      <div
-  style={{
-    padding: 12,
-    overflowY: "auto",          // ✅ scroll up/down
-    overflowX: "hidden",
-    flex: 1,                    // ✅ use remaining height under header
-    minHeight: 0,               // ✅ required for flex scroll in Chrome
-    display: "grid",
-    gap: 10,
-    WebkitOverflowScrolling: "touch",
-  }}
->
-
-        <Accordion
+        <div
+          onWheel={(e) => e.stopPropagation()}   // ✅ IMPORTANT
+          style={{
+            padding: 12,
+            overflowY: "auto",
+            overflowX: "hidden",
+            flex: 1,
+            minHeight: 0,
+            display: "grid",
+            gap: 10,
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",       // ✅ prevents scroll chaining to page
+          }}>
+          <Accordion
           title="Search & jump"
           open={secSearch}
-          onToggle={() => setSecSearch((s) => !s)}
-        >
+          onToggle={() => setSecSearch((s) => !s)}>
           <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
             Search facility name, district, HF code, or type.
           </div>
-
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -570,9 +569,7 @@ function ControlDrawer({
               marginTop: 8,
               fontFamily: "Arial",
               fontWeight: 800,
-            }}
-          />
-
+            }}/>
           {search.trim() && results.length > 0 && (
             <div
               style={{
