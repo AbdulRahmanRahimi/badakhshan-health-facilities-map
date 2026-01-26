@@ -535,16 +535,25 @@ function ControlDrawer({
       </div>
 
         {/* Drawer body */}
-      <div
-              style={{
-                padding: 12,
-                overflow: "hidden",   // ✅ no scrolling here
-                flex: 1,
-                minHeight: 0,
-                display: "grid",
-                gap: 10,
-              }}
-            >
+     {/* Drawer body */}
+        <div
+          onWheel={(e) => e.stopPropagation()}
+          style={{
+            padding: 12,
+            overflowY: "auto",
+            overflowX: "hidden",
+            flex: 1,
+            minHeight: 0,
+        
+            // ✅ IMPORTANT: use flex, not grid
+            display: "flex",
+            flexDirection: "column",
+            gap: 10,
+        
+            WebkitOverflowScrolling: "touch",
+            overscrollBehavior: "contain",
+          }}
+        >
           <Accordion
           title="Search & jump"
           open={secSearch}
