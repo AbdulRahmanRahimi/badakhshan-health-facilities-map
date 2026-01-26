@@ -540,7 +540,7 @@ function ControlDrawer({
           onWheel={(e) => e.stopPropagation()}   // ✅ IMPORTANT
           style={{
             padding: 12,
-            overflowY: "auto",
+            overflowY: "scroll",
             overflowX: "hidden",
             flex: 1,
             minHeight: 0,
