@@ -535,20 +535,16 @@ function ControlDrawer({
       </div>
 
         {/* Drawer body */}
-      {/* Drawer body */}
-        <div
-          onWheel={(e) => e.stopPropagation()}   // ✅ IMPORTANT
-          style={{
-            padding: 12,
-            overflowY: "scroll",
-            overflowX: "hidden",
-            flex: 1,
-            minHeight: 0,
-            display: "grid",
-            gap: 10,
-            WebkitOverflowScrolling: "touch",
-            overscrollBehavior: "contain",       // ✅ prevents scroll chaining to page
-          }}>
+      <div
+              style={{
+                padding: 12,
+                overflow: "hidden",   // ✅ no scrolling here
+                flex: 1,
+                minHeight: 0,
+                display: "grid",
+                gap: 10,
+              }}
+            >
           <Accordion
           title="Search & jump"
           open={secSearch}
@@ -630,166 +626,232 @@ function ControlDrawer({
         </Accordion>
 
         <Accordion
-          title="Labels & buffers"
-          open={secLayers}
-          onToggle={() => setSecLayers((s) => !s)}
-        >
-          <div style={{ display: "grid", gap: 10 }}>
-            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <input
-                type="checkbox"
-                checked={showDistrictLabels}
-                onChange={(e) => setShowDistrictLabels(e.target.checked)}
-              />
-              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
-                District labels (zoom ≥ 8)
-              </span>
-            </label>
+  title="Labels & buffers"
+  open={secLayers}
+  onToggle={() => setSecLayers((s) => !s)}
+>
+  {/* ✅ Scroll only inside this section */}
+  <div
+    onWheel={(e) => e.stopPropagation()}
+    style={{
+      maxHeight: 200,          // ✅ adjust (180–260 is nice)
+      overflowY: "auto",
+      overflowX: "hidden",
+      paddingRight: 6,
+    }}
+  >
+    <div style={{ display: "grid", gap: 10 }}>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={showDistrictLabels}
+          onChange={(e) => setShowDistrictLabels(e.target.checked)}
+        />
+        <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+          District labels (zoom ≥ 8)
+        </span>
+      </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <input
-                type="checkbox"
-                checked={showFacilityLabels}
-                onChange={(e) => setShowFacilityLabels(e.target.checked)}
-              />
-              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
-                Facility labels (zoom ≥ 10)
-              </span>
-            </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={showFacilityLabels}
+          onChange={(e) => setShowFacilityLabels(e.target.checked)}
+        />
+        <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+          Facility labels (zoom ≥ 10)
+        </span>
+      </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <input
-                type="checkbox"
-                checked={showBuffers}
-                onChange={(e) => setShowBuffers(e.target.checked)}
-              />
-              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
-                Buffers (auto show zoom ≥ 9)
-              </span>
-            </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={showBuffers}
+          onChange={(e) => setShowBuffers(e.target.checked)}
+        />
+        <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+          Buffers (auto show zoom ≥ 9)
+        </span>
+      </label>
 
-            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <input
-                type="checkbox"
-                checked={showBufferLabels}
-                onChange={(e) => setShowBufferLabels(e.target.checked)}
-              />
-              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
-                Buffer labels (villages, zoom ≥ 9)
-              </span>
-            </label>
+      <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <input
+          type="checkbox"
+          checked={showBufferLabels}
+          onChange={(e) => setShowBufferLabels(e.target.checked)}
+        />
+        <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+          Buffer labels (villages, zoom ≥ 9)
+        </span>
+      </label>
 
-            <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
-              Tip: if your map gets heavy, keep buffers off while zoomed out.
-            </div>
-          </div>
-        </Accordion>
+      <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+        Tip: if your map gets heavy, keep buffers off while zoomed out.
+      </div>
+    </div>
+  </div>
+</Accordion>
+
 
         <Accordion
           title="Facility types"
           open={secTypes}
           onToggle={() => setSecTypes((s) => !s)}
         >
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
-            <IconButton
-              onClick={() => setSelectedTypes(new Set(types))}
-              title="Select all facility types"
+          {/* ✅ Scroll area only for this section */}
+          <div
+            onWheel={(e) => e.stopPropagation()} // ✅ prevents Leaflet stealing scroll
+            style={{
+              maxHeight: 260,          // ✅ adjust (220–320 is usually good)
+              overflowY: "auto",
+              overflowX: "hidden",
+              paddingRight: 6,         // ✅ space for scrollbar
+            }}
+          >
+            {/* ✅ Sticky action buttons */}
+            <div
+              style={{
+                position: "sticky",
+                top: 0,
+                zIndex: 2,
+                background: "white",
+                paddingBottom: 10,
+                marginBottom: 10,
+                borderBottom: "1px solid rgba(0,0,0,0.08)",
+                display: "flex",
+                gap: 8,
+                flexWrap: "wrap",
+              }}
             >
-              Select all
-            </IconButton>
-            <IconButton onClick={() => setSelectedTypes(new Set())} title="Clear all types">
-              Clear
-            </IconButton>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-            {types.map((t) => {
-              const active = selectedTypes.has(t);
-              return (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => toggleType(t)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 10,
-                    padding: "10px 12px",
-                    borderRadius: 14,
-                    border: active
-                      ? "1px solid rgba(0,0,0,0.35)"
-                      : "1px solid rgba(0,0,0,0.15)",
-                    background: active ? "rgba(0,0,0,0.06)" : "white",
-                    cursor: "pointer",
-                    fontFamily: "Arial",
-                    fontWeight: 900,
-                    fontSize: 13,
-                  }}
-                >
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
-                    <span dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
-                    {t}
-                  </span>
-                  <span style={{ opacity: 0.75 }}>{active ? "On" : "Off"}</span>
-                </button>
-              );
-            })}
+              <IconButton
+                onClick={() => setSelectedTypes(new Set(types))}
+                title="Select all facility types"
+              >
+                Select all
+              </IconButton>
+              <IconButton onClick={() => setSelectedTypes(new Set())} title="Clear all types">
+                Clear
+              </IconButton>
+            </div>
+        
+            {/* ✅ Scrollable list */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {types.map((t) => {
+                const active = selectedTypes.has(t);
+                return (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleType(t)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      padding: "10px 12px",
+                      borderRadius: 14,
+                      border: active
+                        ? "1px solid rgba(0,0,0,0.35)"
+                        : "1px solid rgba(0,0,0,0.15)",
+                      background: active ? "rgba(0,0,0,0.06)" : "white",
+                      cursor: "pointer",
+                      fontFamily: "Arial",
+                      fontWeight: 900,
+                      fontSize: 13,
+                    }}
+                  >
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <span dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
+                      {t}
+                    </span>
+                    <span style={{ opacity: 0.75 }}>{active ? "On" : "Off"}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </Accordion>
 
-        <Accordion
+
+       <Accordion
           title="District summary"
           open={secDistrict}
           onToggle={() => setSecDistrict((s) => !s)}
         >
-          {selectedDistrictSummary ? (
-            <div
-              style={{
-                border: "1px solid rgba(0,0,0,0.12)",
-                borderRadius: 14,
-                padding: 12,
-                background: "rgba(0,0,0,0.03)",
-                fontFamily: "Arial",
-              }}
-            >
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
-                <div style={{ fontWeight: 900 }}>{selectedDistrictSummary.name}</div>
-                <IconButton onClick={onClearDistrict} title="Clear selected district">
-                  Clear
-                </IconButton>
-              </div>
-
-              <div style={{ marginTop: 8, fontSize: 12, color: "#333", fontWeight: 800 }}>
-                Facilities: <b>{selectedDistrictSummary.facilityCount}</b> • Villages sum:{" "}
-                <b>{selectedDistrictSummary.villagesSum}</b>
-              </div>
-
-              <div style={{ marginTop: 10, fontSize: 12 }}>
-                <div style={{ fontWeight: 900, marginBottom: 6 }}>By type</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-                  {Object.entries(selectedDistrictSummary.byType).map(([k, v]) => (
-                    <div
-                      key={k}
-                      style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        fontWeight: 800,
-                      }}
-                    >
-                      <span>{k}</span>
-                      <span style={{ fontWeight: 900 }}>{v}</span>
-                    </div>
-                  ))}
+          {/* ✅ Scroll only inside this section */}
+          <div
+            onWheel={(e) => e.stopPropagation()}
+            style={{
+              maxHeight: 220,          // ✅ adjust if you want more/less
+              overflowY: "auto",
+              overflowX: "hidden",
+              paddingRight: 6,
+            }}
+          >
+            {selectedDistrictSummary ? (
+              <div
+                style={{
+                  border: "1px solid rgba(0,0,0,0.12)",
+                  borderRadius: 14,
+                  padding: 12,
+                  background: "rgba(0,0,0,0.03)",
+                  fontFamily: "Arial",
+                }}
+              >
+                {/* ✅ Sticky header inside the summary */}
+                <div
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    zIndex: 2,
+                    background: "rgba(0,0,0,0.03)",
+                    paddingBottom: 8,
+                    marginBottom: 8,
+                    borderBottom: "1px solid rgba(0,0,0,0.08)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontWeight: 900 }}>{selectedDistrictSummary.name}</div>
+                  <IconButton onClick={onClearDistrict} title="Clear selected district">
+                    Clear
+                  </IconButton>
+                </div>
+        
+                <div style={{ marginTop: 6, fontSize: 12, color: "#333", fontWeight: 800 }}>
+                  Facilities: <b>{selectedDistrictSummary.facilityCount}</b> • Villages sum:{" "}
+                  <b>{selectedDistrictSummary.villagesSum}</b>
+                </div>
+        
+                <div style={{ marginTop: 10, fontSize: 12 }}>
+                  <div style={{ fontWeight: 900, marginBottom: 6 }}>By type</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+                    {Object.entries(selectedDistrictSummary.byType).map(([k, v]) => (
+                      <div
+                        key={k}
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          fontWeight: 800,
+                        }}
+                      >
+                        <span>{k}</span>
+                        <span style={{ fontWeight: 900 }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
-              Click a blue district polygon on the map to see totals and breakdown.
-            </div>
-          )}
-        </Accordion>
+            ) : (
+              <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+                Click a blue district polygon on the map to see totals and breakdown.
+              </div>
+            )}
+          </div>
+</Accordion>
+
       </div>
     </div>
   );
