@@ -34,7 +34,6 @@ const ADM2_GEOJSON_URL =
 const BADAKHSHAN_CENTER = [36.7, 70.8];
 const DEFAULT_ZOOM = 8;
 
-// Rough Afghanistan bbox — excludes obvious bad outliers
 const AFG_BOUNDS = {
   minLat: 29.0,
   maxLat: 39.7,
@@ -101,7 +100,7 @@ function getFeatureId(f, fallbackIndex = 0) {
 }
 
 /* =========================
-   COLORFUL SYMBOL ICONS
+   ICONS (SVG)
 ========================= */
 const TYPE_STYLE = {
   BHC: { fill: "#1f77b4" },
@@ -120,36 +119,36 @@ function svgForType(type) {
 
   switch (type) {
     case "BHC":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <circle cx="14" cy="14" r="9" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
     case "CHC":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <rect x="6" y="6" width="16" height="16" rx="1" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
     case "CHC+":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <polygon points="14,4 24,14 14,24 4,14" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
     case "DH":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <polygon points="14,3 17,10 24.5,10 18.5,14.5 21,23 14,18.5 7,23 9.5,14.5 3.5,10 11,10"
           fill="${fill}" stroke="${stroke}" stroke-width="1.8"/>
       </svg>`;
     case "SHC":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <polygon points="14,5 25,24 3,24" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
     case "PH":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <polygon points="14,4 22,9 22,19 14,24 6,19 6,9" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
     case "Other":
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <path d="M12 5h4v7h7v4h-7v7h-4v-7H5v-4h7z" fill="${fill}" stroke="${stroke}" stroke-width="1.6"/>
       </svg>`;
     default:
-      return `<svg width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+      return `<svg width="26" height="26" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
         <circle cx="14" cy="14" r="9" fill="${fill}" stroke="${stroke}" stroke-width="2"/>
       </svg>`;
   }
@@ -158,16 +157,16 @@ function svgForType(type) {
 function makeDivIcon(type) {
   return L.divIcon({
     className: "hf-div-icon",
-    html: `<div style="transform: translate(-14px,-14px);">${svgForType(
+    html: `<div style="transform: translate(-13px,-13px);">${svgForType(
       type
     )}</div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
+    iconSize: [26, 26],
+    iconAnchor: [13, 13],
   });
 }
 
 /* =========================
-   BUFFERS (Villages)
+   BUFFERS
 ========================= */
 function bufferRadiusMeters(villages) {
   const v = toNumber(villages);
@@ -199,12 +198,8 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
       const b = layer.getBounds();
       if (b.isValid()) {
         map.fitBounds(b, { padding: [40, 40] });
-
-        // ✅ allow panning a bit outside Badakhshan (clean way)
-        const expanded = b.pad(0.35);
-        map.setMaxBounds(expanded);
+        map.setMaxBounds(b.pad(0.35));
         map.options.maxBoundsViscosity = 0.6;
-
         map.setMinZoom(7);
         map.setMaxZoom(18);
         return;
@@ -220,202 +215,232 @@ function MapLockAndFit({ provinceGeo, fallbackCenter, fallbackZoom }) {
 }
 
 /* =========================
-   UI Helpers
+   UI PRIMITIVES
 ========================= */
-function TitleBar() {
+function IconButton({ onClick, title, children, active = false }) {
+  return (
+    <button
+      type="button"
+      title={title}
+      onClick={onClick}
+      style={{
+        border: active ? "1px solid rgba(17,17,17,0.35)" : "1px solid rgba(0,0,0,0.18)",
+        background: active ? "rgba(0,0,0,0.06)" : "white",
+        borderRadius: 12,
+        padding: "10px 12px",
+        cursor: "pointer",
+        fontFamily: "Arial",
+        fontWeight: 900,
+        fontSize: 12,
+        boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function Pill({ children }) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 10px",
+        borderRadius: 999,
+        border: "1px solid rgba(0,0,0,0.12)",
+        background: "rgba(255,255,255,0.92)",
+        boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+        fontFamily: "Arial",
+        fontSize: 12,
+        fontWeight: 900,
+      }}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Chip({ label, onRemove }) {
+  return (
+    <button
+      type="button"
+      onClick={onRemove}
+      title="Remove filter"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 10px",
+        borderRadius: 999,
+        border: "1px solid rgba(0,0,0,0.18)",
+        background: "white",
+        cursor: "pointer",
+        fontFamily: "Arial",
+        fontSize: 12,
+        fontWeight: 900,
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+      }}
+    >
+      <span>{label}</span>
+      <span style={{ opacity: 0.7 }}>×</span>
+    </button>
+  );
+}
+
+function Accordion({ title, open, onToggle, children }) {
+  return (
+    <div
+      style={{
+        border: "1px solid rgba(0,0,0,0.12)",
+        borderRadius: 14,
+        overflow: "hidden",
+        background: "white",
+      }}
+    >
+      <button
+        type="button"
+        onClick={onToggle}
+        style={{
+          width: "100%",
+          textAlign: "left",
+          padding: "12px 12px",
+          border: "none",
+          background: "rgba(0,0,0,0.03)",
+          cursor: "pointer",
+          fontFamily: "Arial",
+          fontWeight: 900,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <span>{title}</span>
+        <span style={{ opacity: 0.75 }}>{open ? "−" : "+"}</span>
+      </button>
+      {open && <div style={{ padding: 12 }}>{children}</div>}
+    </div>
+  );
+}
+
+/* =========================
+   NEW UX: TOP APP BAR
+========================= */
+function TopBar({
+  rowsCount,
+  facilitiesCount,
+  showingCount,
+  outliersExcluded,
+  activeChips,
+  onRemoveChip,
+  onClearAll,
+  onResetView,
+  controlsOpen,
+  setControlsOpen,
+  legendOpen,
+  setLegendOpen,
+}) {
   return (
     <div
       style={{
         position: "absolute",
         top: 10,
-        left: "50%",
-        transform: "translateX(-50%)",
-        zIndex: 9999,
-        background: "white",
-        padding: "10px 14px",
-        borderRadius: 14,
-        border: "1px solid rgba(0,0,0,0.15)",
-        boxShadow: "0 2px 16px rgba(0,0,0,0.12)",
-        fontFamily: "Arial",
-        textAlign: "center",
-        minWidth: 520,
+        left: 10,
+        right: 10,
+        zIndex: 10000,
+        display: "flex",
+        flexDirection: "column",
+        gap: 10,
+        pointerEvents: "none",
       }}
     >
-      <div style={{ fontWeight: 900, fontSize: 16 }}>
-        Badakhshan Health Facilities Coverage Map
-      </div>
-      <div style={{ fontSize: 12, color: "#444", marginTop: 2 }}>
-        Clustering • District analytics • Coverage buffers • Search & filters
-      </div>
-    </div>
-  );
-}
-
-function btn(variant) {
-  const base = {
-    padding: "10px 10px",
-    borderRadius: 14,
-    cursor: "pointer",
-    fontWeight: 900,
-    fontSize: 12,
-  };
-  if (variant === "solid") {
-    return {
-      ...base,
-      border: "1px solid #111",
-      background: "#111",
-      color: "white",
-    };
-  }
-  return {
-    ...base,
-    border: "1px solid rgba(0,0,0,0.25)",
-    background: "white",
-    color: "#111",
-  };
-}
-
-function chipStyle(extra = {}) {
-  return {
-    background: "white",
-    border: "1px solid rgba(0,0,0,0.15)",
-    borderRadius: 12,
-    padding: "8px 10px",
-    boxShadow: "0 2px 12px rgba(0,0,0,0.10)",
-    fontFamily: "Arial",
-    fontSize: 13,
-    ...extra,
-  };
-}
-
-function smallToggleBtn() {
-  return {
-    border: "1px solid rgba(0,0,0,0.18)",
-    background: "white",
-    borderRadius: 12,
-    padding: "10px 12px",
-    cursor: "pointer",
-    fontFamily: "Arial",
-    fontWeight: 900,
-    fontSize: 12,
-    boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
-  };
-}
-
-/* =========================
-   Legend (collapsible)
-========================= */
-function Legend({
-  types,
-  typeCounts,
-  selectedTypes,
-  onToggleType,
-  minimized,
-  onToggleMinimize,
-}) {
-  const preferred = ["BHC", "SHC", "CHC", "CHC+", "DH", "PH", "Other", "Unknown"];
-  const order = preferred.filter((t) => types.includes(t));
-
-  return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: 14,
-        left: 14,
-        zIndex: 9999,
-        fontFamily: "Arial",
-      }}
-    >
-      {minimized ? (
-        <button type="button" onClick={onToggleMinimize} style={smallToggleBtn()}>
-          Show legend
-        </button>
-      ) : (
+      {/* Header row */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          pointerEvents: "auto",
+        }}
+      >
         <div
           style={{
-            background: "white",
-            border: "1px solid rgba(0,0,0,0.15)",
-            borderRadius: 14,
-            padding: "10px 12px",
-            width: 320,
-            boxShadow: "0 2px 16px rgba(0,0,0,0.12)",
-            fontSize: 13,
+            background: "rgba(255,255,255,0.94)",
+            border: "1px solid rgba(0,0,0,0.12)",
+            borderRadius: 18,
+            padding: "10px 14px",
+            boxShadow: "0 2px 18px rgba(0,0,0,0.12)",
+            minWidth: 420,
           }}
         >
           <div
             style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              gap: 10,
-              marginBottom: 8,
+              fontFamily: "Arial",
+              fontWeight: 900,
+              fontSize: 16,
+              lineHeight: 1.2,
             }}
           >
-            <div style={{ fontWeight: 900, fontSize: 14 }}>
-              Legend (click to filter)
-            </div>
-            <button
-              type="button"
-              onClick={onToggleMinimize}
-              style={btn("outline")}
-            >
-              Minimize
-            </button>
+            Badakhshan Health Facilities Coverage Map
+          </div>
+          <div
+            style={{
+              fontFamily: "Arial",
+              fontWeight: 700,
+              fontSize: 12,
+              color: "#444",
+              marginTop: 2,
+            }}
+          >
+            Clustering • District analytics • Buffers • Search & filters
           </div>
 
-          <div style={{ marginBottom: 8, color: "#333", fontWeight: 800 }}>
-            Facility Type (Symbol + Color)
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
+            <Pill>Rows: {rowsCount}</Pill>
+            <Pill>Facilities: {facilitiesCount}</Pill>
+            <Pill>Showing: {showingCount}</Pill>
+            {outliersExcluded > 0 ? <Pill>Outliers excluded: {outliersExcluded}</Pill> : null}
           </div>
+        </div>
 
-          {order.map((t) => {
-            const active = selectedTypes.has(t);
-            const count = typeCounts[t] || 0;
-            return (
-              <button
-                key={t}
-                onClick={() => onToggleType(t)}
-                type="button"
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  gap: 10,
-                  padding: "8px 8px",
-                  margin: "4px 0",
-                  borderRadius: 12,
-                  border: "1px solid rgba(0,0,0,0.15)",
-                  cursor: "pointer",
-                  background: active ? "rgba(0,0,0,0.06)" : "white",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
-                  <div style={{ fontWeight: 900 }}>{t}</div>
-                </div>
-                <div style={{ fontWeight: 900, color: "#111" }}>{count}</div>
-              </button>
-            );
-          })}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <IconButton onClick={onResetView} title="Reset view">
+            ⟳ Reset view
+          </IconButton>
 
-          <hr style={{ margin: "10px 0" }} />
+          <IconButton onClick={onClearAll} title="Clear search and filters">
+            ✕ Clear all
+          </IconButton>
 
-          <div style={{ fontWeight: 900, marginBottom: 6 }}>Boundaries</div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-            <div style={{ width: 26, height: 6, background: "red" }} />
-            <div style={{ fontWeight: 800 }}>Province boundary</div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ width: 26, height: 6, background: "blue" }} />
-            <div style={{ fontWeight: 800 }}>District boundary</div>
-          </div>
+          <IconButton
+            onClick={() => setLegendOpen((s) => !s)}
+            title="Toggle legend"
+            active={legendOpen}
+          >
+            🧭 Legend
+          </IconButton>
 
-          <hr style={{ margin: "10px 0" }} />
+          <IconButton
+            onClick={() => setControlsOpen((s) => !s)}
+            title="Toggle controls"
+            active={controlsOpen}
+          >
+            ☰ Controls
+          </IconButton>
+        </div>
+      </div>
 
-          <div style={{ fontWeight: 900, marginBottom: 4 }}>Coverage buffers</div>
-          <div style={{ color: "#444", lineHeight: 1.35 }}>
-            Radius scales with villages covered (sqrt scaling, capped).
-          </div>
+      {/* Active filter chips row */}
+      {activeChips.length > 0 && (
+        <div style={{ pointerEvents: "auto", display: "flex", gap: 8, flexWrap: "wrap" }}>
+          {activeChips.map((c) => (
+            <Chip key={c.key} label={c.label} onRemove={() => onRemoveChip(c)} />
+          ))}
         </div>
       )}
     </div>
@@ -423,24 +448,18 @@ function Legend({
 }
 
 /* =========================
-   Sidebar (collapsible)
+   NEW UX: CONTROL DRAWER
 ========================= */
-function Sidebar({
-  minimized,
-  onToggleMinimize,
-
+function ControlDrawer({
+  open,
+  onClose,
+  zoom,
   search,
   setSearch,
   results,
   onSelectResult,
-
-  types,
-  selectedTypes,
-  setSelectedTypes,
-
   basemap,
   setBasemap,
-
   showBuffers,
   setShowBuffers,
   showBufferLabels,
@@ -449,11 +468,24 @@ function Sidebar({
   setShowFacilityLabels,
   showDistrictLabels,
   setShowDistrictLabels,
-
-  zoom,
+  types,
+  selectedTypes,
+  setSelectedTypes,
   selectedDistrictSummary,
   onClearDistrict,
 }) {
+  const [secSearch, setSecSearch] = useState(true);
+  const [secMap, setSecMap] = useState(true);
+  const [secLayers, setSecLayers] = useState(true);
+  const [secTypes, setSecTypes] = useState(true);
+  const [secDistrict, setSecDistrict] = useState(false);
+
+  useEffect(() => {
+    if (selectedDistrictSummary) setSecDistrict(true);
+  }, [selectedDistrictSummary]);
+
+  if (!open) return null;
+
   const toggleType = (t) => {
     const next = new Set(selectedTypes);
     if (next.has(t)) next.delete(t);
@@ -461,255 +493,282 @@ function Sidebar({
     setSelectedTypes(next);
   };
 
-  if (minimized) {
-    return (
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          right: 10,
-          zIndex: 9999,
-          fontFamily: "Arial",
-        }}
-      >
-        <button type="button" onClick={onToggleMinimize} style={smallToggleBtn()}>
-          Show controls
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div
       style={{
         position: "absolute",
-        top: 10,
+        top: 90,
         right: 10,
-        zIndex: 9999,
-        width: 380,
-        maxHeight: "92vh",
-        overflow: "auto",
-        background: "white",
-        borderRadius: 16,
-        border: "1px solid rgba(0,0,0,0.15)",
-        boxShadow: "0 2px 18px rgba(0,0,0,0.15)",
-        fontFamily: "Arial",
+        bottom: 10,
+        width: 420,
+        zIndex: 10001,
+        background: "rgba(255,255,255,0.97)",
+        border: "1px solid rgba(0,0,0,0.12)",
+        borderRadius: 18,
+        boxShadow: "0 2px 22px rgba(0,0,0,0.16)",
+        overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <div style={{ padding: 12 }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: 10,
-            marginBottom: 10,
-          }}
-        >
-          <div style={{ fontSize: 15, fontWeight: 900 }}>Controls</div>
-          <button type="button" onClick={onToggleMinimize} style={btn("outline")}>
-            Minimize
-          </button>
-        </div>
-
-        <div
-          style={{
-            fontSize: 12,
-            color: "#444",
-            marginBottom: 10,
-            lineHeight: 1.35,
-          }}
-        >
-          Smart display: facility labels appear at <b>zoom ≥ 10</b>, buffer
-          labels at <b>zoom ≥ 9</b>, district labels at <b>zoom ≥ 8</b>. Current
-          zoom: <b>{zoom}</b>.
-        </div>
-
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 6 }}>
-            Search (facility / district / HF code)
+      {/* Drawer header */}
+      <div
+        style={{
+          padding: 12,
+          borderBottom: "1px solid rgba(0,0,0,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          fontFamily: "Arial",
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 900, fontSize: 14 }}>Controls</div>
+          <div style={{ fontSize: 12, color: "#555", fontWeight: 800, marginTop: 2 }}>
+            Smart display • Zoom: <b>{zoom}</b>
           </div>
+        </div>
+        <IconButton onClick={onClose} title="Close controls">
+          Hide
+        </IconButton>
+      </div>
+
+      {/* Drawer body */}
+      <div style={{ padding: 12, overflow: "auto", display: "grid", gap: 10 }}>
+        <Accordion
+          title="Search & jump"
+          open={secSearch}
+          onToggle={() => setSecSearch((s) => !s)}
+        >
+          <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+            Search facility name, district, HF code, or type.
+          </div>
+
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Type to search..."
             style={{
               width: "100%",
-              padding: "10px 10px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.25)",
+              padding: "10px 12px",
+              borderRadius: 14,
+              border: "1px solid rgba(0,0,0,0.22)",
               outline: "none",
+              marginTop: 8,
+              fontFamily: "Arial",
+              fontWeight: 800,
             }}
           />
 
           {search.trim() && results.length > 0 && (
             <div
               style={{
-                marginTop: 8,
-                border: "1px solid rgba(0,0,0,0.15)",
-                borderRadius: 12,
+                marginTop: 10,
+                border: "1px solid rgba(0,0,0,0.12)",
+                borderRadius: 14,
                 overflow: "hidden",
               }}
             >
               {results.map((r) => (
                 <button
                   key={r._id}
+                  type="button"
                   onClick={() => onSelectResult(r)}
                   style={{
                     width: "100%",
                     textAlign: "left",
-                    padding: "10px 10px",
+                    padding: "10px 12px",
                     border: "none",
                     background: "white",
                     cursor: "pointer",
                     borderBottom: "1px solid rgba(0,0,0,0.08)",
+                    fontFamily: "Arial",
                   }}
                 >
                   <div style={{ fontWeight: 900, fontSize: 13 }}>{r._name}</div>
-                  <div style={{ fontSize: 12, color: "#444" }}>
+                  <div style={{ fontSize: 12, color: "#555", fontWeight: 800 }}>
                     {r._type} • {r._district || "—"} • {r._hfCode || "—"}
                   </div>
                 </button>
               ))}
             </div>
           )}
-        </div>
+        </Accordion>
 
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 6 }}>
-            Basemap
+        <Accordion title="Map" open={secMap} onToggle={() => setSecMap((s) => !s)}>
+          <div style={{ display: "grid", gap: 10 }}>
+            <div style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 12 }}>
+              Basemap
+            </div>
+            <select
+              value={basemap}
+              onChange={(e) => setBasemap(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                borderRadius: 14,
+                border: "1px solid rgba(0,0,0,0.22)",
+                fontFamily: "Arial",
+                fontWeight: 800,
+              }}
+            >
+              <option value="carto">Carto Light (recommended)</option>
+              <option value="osm">OpenStreetMap</option>
+              <option value="satellite">Satellite (Esri)</option>
+            </select>
           </div>
-          <select
-            value={basemap}
-            onChange={(e) => setBasemap(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "10px 10px",
-              borderRadius: 12,
-              border: "1px solid rgba(0,0,0,0.25)",
-            }}
-          >
-            <option value="carto">Carto Light (recommended)</option>
-            <option value="osm">OpenStreetMap</option>
-            <option value="satellite">Satellite (Esri)</option>
-          </select>
-        </div>
+        </Accordion>
 
-        <div style={{ display: "grid", gap: 8, marginBottom: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={showFacilityLabels}
-              onChange={(e) => setShowFacilityLabels(e.target.checked)}
-            />
-            <span style={{ fontSize: 13, fontWeight: 900 }}>
-              Show facility name labels
-            </span>
-          </label>
+        <Accordion
+          title="Labels & buffers"
+          open={secLayers}
+          onToggle={() => setSecLayers((s) => !s)}
+        >
+          <div style={{ display: "grid", gap: 10 }}>
+            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="checkbox"
+                checked={showDistrictLabels}
+                onChange={(e) => setShowDistrictLabels(e.target.checked)}
+              />
+              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+                District labels (zoom ≥ 8)
+              </span>
+            </label>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={showBuffers}
-              onChange={(e) => setShowBuffers(e.target.checked)}
-            />
-            <span style={{ fontSize: 13, fontWeight: 900 }}>Show buffers</span>
-          </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="checkbox"
+                checked={showFacilityLabels}
+                onChange={(e) => setShowFacilityLabels(e.target.checked)}
+              />
+              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+                Facility labels (zoom ≥ 10)
+              </span>
+            </label>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={showBufferLabels}
-              onChange={(e) => setShowBufferLabels(e.target.checked)}
-            />
-            <span style={{ fontSize: 13, fontWeight: 900 }}>
-              Show buffer labels (villages)
-            </span>
-          </label>
+            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="checkbox"
+                checked={showBuffers}
+                onChange={(e) => setShowBuffers(e.target.checked)}
+              />
+              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+                Buffers (auto show zoom ≥ 9)
+              </span>
+            </label>
 
-          <label style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <input
-              type="checkbox"
-              checked={showDistrictLabels}
-              onChange={(e) => setShowDistrictLabels(e.target.checked)}
-            />
-            <span style={{ fontSize: 13, fontWeight: 900 }}>
-              Show district labels
-            </span>
-          </label>
-        </div>
+            <label style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <input
+                type="checkbox"
+                checked={showBufferLabels}
+                onChange={(e) => setShowBufferLabels(e.target.checked)}
+              />
+              <span style={{ fontFamily: "Arial", fontWeight: 900, fontSize: 13 }}>
+                Buffer labels (villages, zoom ≥ 9)
+              </span>
+            </label>
 
-        <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 12, fontWeight: 900, marginBottom: 6 }}>
-            Facility types
+            <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+              Tip: if your map gets heavy, keep buffers off while zoomed out.
+            </div>
           </div>
+        </Accordion>
 
-          <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-            <button
+        <Accordion
+          title="Facility types"
+          open={secTypes}
+          onToggle={() => setSecTypes((s) => !s)}
+        >
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
+            <IconButton
               onClick={() => setSelectedTypes(new Set(types))}
-              style={btn("outline")}
-              type="button"
+              title="Select all facility types"
             >
               Select all
-            </button>
-            <button
-              onClick={() => setSelectedTypes(new Set())}
-              style={btn("outline")}
-              type="button"
-            >
+            </IconButton>
+            <IconButton onClick={() => setSelectedTypes(new Set())} title="Clear all types">
               Clear
-            </button>
+            </IconButton>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {types.map((t) => (
-              <button
-                key={t}
-                onClick={() => toggleType(t)}
-                style={btn(selectedTypes.has(t) ? "solid" : "outline")}
-                type="button"
-              >
-                {t}
-              </button>
-            ))}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {types.map((t) => {
+              const active = selectedTypes.has(t);
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => toggleType(t)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 10,
+                    padding: "10px 12px",
+                    borderRadius: 14,
+                    border: active
+                      ? "1px solid rgba(0,0,0,0.35)"
+                      : "1px solid rgba(0,0,0,0.15)",
+                    background: active ? "rgba(0,0,0,0.06)" : "white",
+                    cursor: "pointer",
+                    fontFamily: "Arial",
+                    fontWeight: 900,
+                    fontSize: 13,
+                  }}
+                >
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <span dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
+                    {t}
+                  </span>
+                  <span style={{ opacity: 0.75 }}>{active ? "On" : "Off"}</span>
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </Accordion>
 
-        <div style={{ marginTop: 14 }}>
-          <div style={{ fontWeight: 900, fontSize: 13, marginBottom: 6 }}>
-            District summary (click a district)
-          </div>
-
+        <Accordion
+          title="District summary"
+          open={secDistrict}
+          onToggle={() => setSecDistrict((s) => !s)}
+        >
           {selectedDistrictSummary ? (
             <div
               style={{
-                border: "1px solid rgba(0,0,0,0.15)",
+                border: "1px solid rgba(0,0,0,0.12)",
                 borderRadius: 14,
-                padding: 10,
+                padding: 12,
                 background: "rgba(0,0,0,0.03)",
+                fontFamily: "Arial",
               }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
                 <div style={{ fontWeight: 900 }}>{selectedDistrictSummary.name}</div>
-                <button type="button" onClick={onClearDistrict} style={btn("outline")}>
+                <IconButton onClick={onClearDistrict} title="Clear selected district">
                   Clear
-                </button>
+                </IconButton>
               </div>
 
-              <div style={{ marginTop: 8, fontSize: 12, color: "#333" }}>
+              <div style={{ marginTop: 8, fontSize: 12, color: "#333", fontWeight: 800 }}>
                 Facilities: <b>{selectedDistrictSummary.facilityCount}</b> • Villages sum:{" "}
                 <b>{selectedDistrictSummary.villagesSum}</b>
               </div>
 
               <div style={{ marginTop: 10, fontSize: 12 }}>
                 <div style={{ fontWeight: 900, marginBottom: 6 }}>By type</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
                   {Object.entries(selectedDistrictSummary.byType).map(([k, v]) => (
                     <div
                       key={k}
-                      style={{ display: "flex", justifyContent: "space-between" }}
+                      style={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        fontWeight: 800,
+                      }}
                     >
-                      <span style={{ fontWeight: 800 }}>{k}</span>
+                      <span>{k}</span>
                       <span style={{ fontWeight: 900 }}>{v}</span>
                     </div>
                   ))}
@@ -717,10 +776,122 @@ function Sidebar({
               </div>
             </div>
           ) : (
-            <div style={{ fontSize: 12, color: "#555", lineHeight: 1.35 }}>
-              Click a blue district polygon to see totals and type breakdown.
+            <div style={{ fontFamily: "Arial", fontSize: 12, color: "#555", fontWeight: 800 }}>
+              Click a blue district polygon on the map to see totals and breakdown.
             </div>
           )}
+        </Accordion>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   NEW UX: LEGEND PANEL
+========================= */
+function LegendPanel({
+  open,
+  onClose,
+  types,
+  typeCounts,
+  selectedTypes,
+  onToggleType,
+}) {
+  if (!open) return null;
+
+  const preferred = ["BHC", "SHC", "CHC", "CHC+", "DH", "PH", "Other", "Unknown"];
+  const order = preferred.filter((t) => types.includes(t));
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: 10,
+        bottom: 10,
+        width: 360,
+        zIndex: 10001,
+        background: "rgba(255,255,255,0.97)",
+        border: "1px solid rgba(0,0,0,0.12)",
+        borderRadius: 18,
+        boxShadow: "0 2px 22px rgba(0,0,0,0.16)",
+        overflow: "hidden",
+        fontFamily: "Arial",
+      }}
+    >
+      <div
+        style={{
+          padding: 12,
+          borderBottom: "1px solid rgba(0,0,0,0.10)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+        }}
+      >
+        <div>
+          <div style={{ fontWeight: 900, fontSize: 14 }}>Legend</div>
+          <div style={{ fontSize: 12, color: "#555", fontWeight: 800, marginTop: 2 }}>
+            Click items to filter.
+          </div>
+        </div>
+        <IconButton onClick={onClose} title="Close legend">
+          Hide
+        </IconButton>
+      </div>
+
+      <div style={{ padding: 12 }}>
+        <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 10 }}>
+          Facility type (symbol + count)
+        </div>
+
+        <div style={{ display: "grid", gap: 8 }}>
+          {order.map((t) => {
+            const active = selectedTypes.has(t);
+            const count = typeCounts[t] || 0;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => onToggleType(t)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 10,
+                  padding: "10px 12px",
+                  borderRadius: 14,
+                  border: active
+                    ? "1px solid rgba(0,0,0,0.35)"
+                    : "1px solid rgba(0,0,0,0.14)",
+                  background: active ? "rgba(0,0,0,0.06)" : "white",
+                  cursor: "pointer",
+                  fontFamily: "Arial",
+                }}
+              >
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+                  <span dangerouslySetInnerHTML={{ __html: svgForType(t) }} />
+                  <span style={{ fontWeight: 900 }}>{t}</span>
+                </span>
+                <span style={{ fontWeight: 900, color: "#111" }}>{count}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        <div style={{ marginTop: 12, borderTop: "1px solid rgba(0,0,0,0.10)", paddingTop: 12 }}>
+          <div style={{ fontWeight: 900, marginBottom: 6 }}>Boundaries</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+            <div style={{ width: 28, height: 6, background: "red" }} />
+            <div style={{ fontWeight: 800, fontSize: 12 }}>Province boundary</div>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ width: 28, height: 6, background: "blue" }} />
+            <div style={{ fontWeight: 800, fontSize: 12 }}>District boundary</div>
+          </div>
+
+          <div style={{ marginTop: 10, fontSize: 12, color: "#555", fontWeight: 800 }}>
+            Buffers: radius scales with villages covered (sqrt scaling, capped).
+          </div>
         </div>
       </div>
     </div>
@@ -738,11 +909,11 @@ export default function App() {
   const [districtsGeo, setDistrictsGeo] = useState(null);
   const [provinceGeo, setProvinceGeo] = useState(null);
 
-  // Selected district
+  // Selected district summary
   const [selectedDistrictId, setSelectedDistrictId] = useState(null);
   const [selectedDistrictSummary, setSelectedDistrictSummary] = useState(null);
 
-  // UI state
+  // UI
   const [search, setSearch] = useState("");
   const [basemap, setBasemap] = useState("carto");
   const [showBuffers, setShowBuffers] = useState(true);
@@ -750,16 +921,33 @@ export default function App() {
   const [showFacilityLabels, setShowFacilityLabels] = useState(false);
   const [showDistrictLabels, setShowDistrictLabels] = useState(true);
 
-  // Collapsible panels
-  const [sidebarMinimized, setSidebarMinimized] = useState(false);
-  const [legendMinimized, setLegendMinimized] = useState(false);
+  // New UX layout toggles
+  const [controlsOpen, setControlsOpen] = useState(true);
+  const [legendOpen, setLegendOpen] = useState(true);
 
-  // Zoom state
+  // Zoom
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
 
-  // Marker refs
+  // Marker refs for search -> open popup
   const markerRefs = useRef(new Map());
   const mapRef = useRef(null);
+
+  // Responsive: auto-close panels on small screens
+  useEffect(() => {
+    const onResize = () => {
+      const w = window.innerWidth;
+      if (w < 980) {
+        setControlsOpen(false);
+        setLegendOpen(false);
+      } else {
+        setControlsOpen(true);
+        setLegendOpen(true);
+      }
+    };
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
 
   /* Load CSV */
   useEffect(() => {
@@ -805,16 +993,12 @@ export default function App() {
         /hf name/i,
       ]),
       districtCol: findColumnByHints(cols, [/district/i]),
-      hfCodeCol: findColumnByHints(cols, [
-        /hf code/i,
-        /facility code/i,
-        /code/i,
-      ]),
+      hfCodeCol: findColumnByHints(cols, [/hf code/i, /facility code/i, /code/i]),
       villagesCol: findColumnByHints(cols, [/villag/i, /cover.*vill/i, /no.*vill/i]),
     };
   }, [rows]);
 
-  /* Parse points + exclude Afghanistan outliers */
+  /* Parse points + exclude outliers */
   const { pointsAfghanistan, excludedOutliers } = useMemo(() => {
     if (!rows.length) return { pointsAfghanistan: [], excludedOutliers: 0 };
 
@@ -824,7 +1008,7 @@ export default function App() {
     let id = 0;
     let excluded = 0;
 
-    const known = ["BHC", "CHC", "CHC+", "DH", "SHC", "PH", "OTHER", "UNKNOWN"];
+    const KNOWN = ["BHC", "CHC", "CHC+", "DH", "SHC", "PH", "OTHER", "UNKNOWN"];
 
     const pts = rows
       .map((r) => {
@@ -843,11 +1027,14 @@ export default function App() {
           return null;
         }
 
-        const raw = String(r[typeCol] ?? "").trim().toUpperCase().replace(/\s+/g, "");
-        let type = raw || "UNKNOWN";
-        if (!known.includes(type)) type = "UNKNOWN";
-        if (type === "OTHER") type = "Other";
-        if (type === "UNKNOWN") type = "Unknown";
+        const raw = String(r[typeCol] ?? "")
+          .trim()
+          .toUpperCase()
+          .replace(/\s+/g, "");
+        let t = raw || "UNKNOWN";
+        if (!KNOWN.includes(t)) t = "UNKNOWN";
+        if (t === "OTHER") t = "Other";
+        if (t === "UNKNOWN") t = "Unknown";
 
         const name = (r[nameCol] ?? "Facility").toString().trim();
         const district = districtCol ? String(r[districtCol] ?? "").trim() : "";
@@ -859,7 +1046,7 @@ export default function App() {
           _id: ++id,
           lat,
           lon,
-          _type: type,
+          _type: t,
           _name: name,
           _district: district,
           _hfCode: hfCode,
@@ -873,6 +1060,7 @@ export default function App() {
 
   /* =========================
      GeoJSON FIX (Badakhshan)
+     - select correct district polygons using points
   ========================= */
   useEffect(() => {
     if (!pointsAfghanistan.length) return;
@@ -884,7 +1072,7 @@ export default function App() {
         const features = adm2?.features || [];
         if (!features.length) return;
 
-        const index = new Map(); // normName -> [featureIndex]
+        const index = new Map();
         features.forEach((f, i) => {
           const nm = normName(f?.properties?.shapeName);
           if (!index.has(nm)) index.set(nm, []);
@@ -940,7 +1128,6 @@ export default function App() {
             const hits = index.get(normName(nm)) || [];
             candidateIndexes.push(...hits);
           }
-
           if (!candidateIndexes.length) continue;
 
           const score = new Map();
@@ -990,7 +1177,6 @@ export default function App() {
               bestFi = fi;
             }
           }
-
           if (bestFi !== null) selectedFeatureIndexes.add(bestFi);
         }
 
@@ -998,10 +1184,9 @@ export default function App() {
           .map((i) => features[i])
           .filter(Boolean);
 
-        const badDistrictsFC = { type: "FeatureCollection", features: badDistricts };
-        setDistrictsGeo(badDistrictsFC);
+        setDistrictsGeo({ type: "FeatureCollection", features: badDistricts });
 
-        // Province outline: dissolve/union
+        // Province outline
         let province = null;
         try {
           const temp = {
@@ -1084,6 +1269,9 @@ export default function App() {
   const effectiveShowBufferLabels = showBufferLabels && zoom >= 9;
   const effectiveShowDistrictLabels = showDistrictLabels && zoom >= 8;
 
+  // Buffers can be heavy; show only at zoom >= 9
+  const effectiveShowBuffers = showBuffers && zoom >= 9;
+
   /* Search results list (top 10) */
   const searchResults = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -1151,7 +1339,7 @@ export default function App() {
   const onEachDistrict = (feature, layer) => {
     const name = getDistrictNameFromFeature(feature);
 
-    // Tooltip behavior: bind/unbind cleanly to reduce flicker
+    // Bind/unbind tooltip cleanly
     if (effectiveShowDistrictLabels && name) {
       if (!layer.getTooltip()) {
         layer.bindTooltip(String(name), {
@@ -1170,9 +1358,8 @@ export default function App() {
       setSelectedDistrictId(id);
 
       try {
-        const poly = feature;
         const inside = pointsBadakhshan.filter((p) =>
-          turf.booleanPointInPolygon(turf.point([p.lon, p.lat]), poly)
+          turf.booleanPointInPolygon(turf.point([p.lon, p.lat]), feature)
         );
 
         const byType = {};
@@ -1212,8 +1399,84 @@ export default function App() {
     };
   };
 
-  // Optional: reduce heavy buffer rendering at low zoom
-  const effectiveShowBuffers = showBuffers && zoom >= 9;
+  /* Active filter chips for TopBar */
+  const activeChips = useMemo(() => {
+    const chips = [];
+    if (search.trim()) chips.push({ key: "search", label: `Search: ${search.trim()}` });
+
+    // Types: if not all selected
+    if (types.length && selectedTypes.size && selectedTypes.size !== types.length) {
+      // show up to 4 chips; then "+N more"
+      const arr = Array.from(selectedTypes);
+      const max = 4;
+      for (let i = 0; i < Math.min(max, arr.length); i++) {
+        chips.push({ key: `type-${arr[i]}`, label: `Type: ${arr[i]}`, type: arr[i] });
+      }
+      if (arr.length > max) chips.push({ key: "types-more", label: `+${arr.length - max} more types` });
+    }
+
+    if (!showBuffers) chips.push({ key: "buf-off", label: "Buffers: Off" });
+    if (!showDistrictLabels) chips.push({ key: "dl-off", label: "District labels: Off" });
+    if (!showFacilityLabels) chips.push({ key: "fl-off", label: "Facility labels: Off" });
+    if (!showBufferLabels) chips.push({ key: "bl-off", label: "Buffer labels: Off" });
+
+    if (basemap !== "carto") chips.push({ key: "basemap", label: `Basemap: ${basemap}` });
+
+    return chips;
+  }, [
+    search,
+    types,
+    selectedTypes,
+    showBuffers,
+    showDistrictLabels,
+    showFacilityLabels,
+    showBufferLabels,
+    basemap,
+  ]);
+
+  const onRemoveChip = (chip) => {
+    if (chip.key === "search") setSearch("");
+    if (chip.key.startsWith("type-") && chip.type) {
+      const next = new Set(selectedTypes);
+      next.delete(chip.type);
+      setSelectedTypes(next);
+    }
+    if (chip.key === "buf-off") setShowBuffers(true);
+    if (chip.key === "dl-off") setShowDistrictLabels(true);
+    if (chip.key === "fl-off") setShowFacilityLabels(true);
+    if (chip.key === "bl-off") setShowBufferLabels(true);
+    if (chip.key === "basemap") setBasemap("carto");
+  };
+
+  const clearAll = () => {
+    setSearch("");
+    if (types.length) setSelectedTypes(new Set(types));
+    setBasemap("carto");
+    setShowBuffers(true);
+    setShowBufferLabels(true);
+    setShowFacilityLabels(false);
+    setShowDistrictLabels(true);
+    clearDistrict();
+  };
+
+  const resetView = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (provinceGeo) {
+      try {
+        const b = L.geoJSON(provinceGeo).getBounds();
+        if (b.isValid()) {
+          map.fitBounds(b, { padding: [40, 40] });
+          return;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    map.setView(BADAKHSHAN_CENTER, DEFAULT_ZOOM);
+  };
 
   if (loading) {
     return <div style={{ fontFamily: "Arial", padding: 16 }}>Loading…</div>;
@@ -1227,9 +1490,9 @@ export default function App() {
           font-weight: 900;
           border-radius: 10px;
           padding: 2px 6px;
-          border: 1px solid rgba(0,0,0,0.25);
+          border: 1px solid rgba(0,0,0,0.22);
           box-shadow: 0 2px 10px rgba(0,0,0,0.10);
-          background: rgba(255,255,255,0.88);
+          background: rgba(255,255,255,0.90);
           white-space: nowrap;
         }
         .district-label { font-size: 11px; }
@@ -1241,46 +1504,29 @@ export default function App() {
         }
       `}</style>
 
-      <TitleBar />
+      <TopBar
+        rowsCount={rows.length}
+        facilitiesCount={pointsBadakhshan.length}
+        showingCount={pointsFiltered.length}
+        outliersExcluded={excludedOutliers}
+        activeChips={activeChips}
+        onRemoveChip={onRemoveChip}
+        onClearAll={clearAll}
+        onResetView={resetView}
+        controlsOpen={controlsOpen}
+        setControlsOpen={setControlsOpen}
+        legendOpen={legendOpen}
+        setLegendOpen={setLegendOpen}
+      />
 
-      {/* Status chips */}
-      <div
-        style={{
-          position: "absolute",
-          top: 10,
-          left: 10,
-          zIndex: 9999,
-          display: "flex",
-          gap: 10,
-        }}
-      >
-        <div style={chipStyle()}>
-          Rows: <b>{rows.length}</b> • Facilities (Badakhshan):{" "}
-          <b>{pointsBadakhshan.length}</b>
-        </div>
-
-        <div style={chipStyle()}>
-          Showing: <b>{pointsFiltered.length}</b>
-        </div>
-
-        {excludedOutliers > 0 && (
-          <div style={chipStyle({ borderColor: "rgba(200,0,0,0.25)" })}>
-            Outliers excluded: <b>{excludedOutliers}</b>
-          </div>
-        )}
-      </div>
-
-      {/* Collapsible Controls Sidebar */}
-      <Sidebar
-        minimized={sidebarMinimized}
-        onToggleMinimize={() => setSidebarMinimized((s) => !s)}
+      <ControlDrawer
+        open={controlsOpen}
+        onClose={() => setControlsOpen(false)}
+        zoom={zoom}
         search={search}
         setSearch={setSearch}
         results={searchResults}
         onSelectResult={onSelectResult}
-        types={types}
-        selectedTypes={selectedTypes}
-        setSelectedTypes={setSelectedTypes}
         basemap={basemap}
         setBasemap={setBasemap}
         showBuffers={showBuffers}
@@ -1291,21 +1537,23 @@ export default function App() {
         setShowFacilityLabels={setShowFacilityLabels}
         showDistrictLabels={showDistrictLabels}
         setShowDistrictLabels={setShowDistrictLabels}
-        zoom={zoom}
+        types={types}
+        selectedTypes={selectedTypes}
+        setSelectedTypes={setSelectedTypes}
         selectedDistrictSummary={selectedDistrictSummary}
         onClearDistrict={clearDistrict}
       />
 
-      {/* Collapsible Legend */}
-      <Legend
-        minimized={legendMinimized}
-        onToggleMinimize={() => setLegendMinimized((s) => !s)}
+      <LegendPanel
+        open={legendOpen}
+        onClose={() => setLegendOpen(false)}
         types={types}
         typeCounts={typeCounts}
         selectedTypes={selectedTypes}
         onToggleType={onToggleType}
       />
 
+      {/* Map */}
       <MapContainer
         center={BADAKHSHAN_CENTER}
         zoom={DEFAULT_ZOOM}
@@ -1313,25 +1561,19 @@ export default function App() {
         whenCreated={(m) => (mapRef.current = m)}
       >
         <TileLayer attribution={tile.attrib} url={tile.url} />
-
         <MapZoomWatcher onZoom={setZoom} />
-
         <MapLockAndFit
           provinceGeo={provinceGeo}
           fallbackCenter={BADAKHSHAN_CENTER}
           fallbackZoom={DEFAULT_ZOOM}
         />
 
-        {/* District boundaries (BLUE) */}
+        {/* District boundaries */}
         {districtsGeo && (
-          <GeoJSON
-            data={districtsGeo}
-            style={districtStyle}
-            onEachFeature={onEachDistrict}
-          />
+          <GeoJSON data={districtsGeo} style={districtStyle} onEachFeature={onEachDistrict} />
         )}
 
-        {/* Province outline (RED) on top */}
+        {/* Province outline */}
         {provinceGeo && (
           <GeoJSON data={provinceGeo} style={{ color: "red", weight: 4, fillOpacity: 0 }} />
         )}
@@ -1341,7 +1583,7 @@ export default function App() {
           pointsFiltered.map((p) => {
             const villages = toNumber(p._villages);
             const radius = bufferRadiusMeters(villages);
-            const opacity = zoom >= 9 ? 0.1 : 0.06;
+            const opacity = zoom >= 9 ? 0.10 : 0.06;
 
             return (
               <Circle
@@ -1356,12 +1598,7 @@ export default function App() {
                 }}
               >
                 {effectiveShowBufferLabels && villages !== null && (
-                  <Tooltip
-                    permanent
-                    direction="center"
-                    className="buffer-label"
-                    opacity={0.95}
-                  >
+                  <Tooltip permanent direction="center" className="buffer-label" opacity={0.95}>
                     {Math.round(villages)}
                   </Tooltip>
                 )}
@@ -1369,7 +1606,7 @@ export default function App() {
             );
           })}
 
-        {/* Clustering for facilities */}
+        {/* Markers + clustering */}
         <MarkerClusterGroup
           chunkedLoading
           showCoverageOnHover={false}
@@ -1391,7 +1628,6 @@ export default function App() {
                   else markerRefs.current.delete(p._id);
                 }}
               >
-                {/* Facility name label (smart) */}
                 {effectiveShowFacilityLabels && (
                   <Tooltip
                     permanent
@@ -1405,17 +1641,8 @@ export default function App() {
                 )}
 
                 <Popup>
-                  <div
-                    style={{
-                      fontFamily: "Arial",
-                      fontSize: 13,
-                      lineHeight: 1.35,
-                      minWidth: 260,
-                    }}
-                  >
-                    <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}>
-                      {p._name}
-                    </div>
+                  <div style={{ fontFamily: "Arial", fontSize: 13, lineHeight: 1.35, minWidth: 260 }}>
+                    <div style={{ fontWeight: 900, fontSize: 14, marginBottom: 8 }}>{p._name}</div>
 
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <tbody>
@@ -1450,9 +1677,15 @@ export default function App() {
                       </tbody>
                     </table>
 
-                    {showBuffers && villages !== null && (
+                    {effectiveShowBuffers && villages !== null && (
                       <div style={{ marginTop: 8, color: "#333" }}>
                         Coverage radius: <b>{Math.round(radius)} m</b>
+                      </div>
+                    )}
+
+                    {!effectiveShowBuffers && showBuffers && (
+                      <div style={{ marginTop: 8, color: "#555", fontSize: 12, fontWeight: 800 }}>
+                        Buffers are hidden at this zoom. Zoom in to see buffers.
                       </div>
                     )}
                   </div>
