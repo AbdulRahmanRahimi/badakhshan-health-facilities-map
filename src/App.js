@@ -535,7 +535,19 @@ function ControlDrawer({
       </div>
 
       {/* Drawer body */}
-      <div style={{ padding: 12, overflow: "auto", display: "grid", gap: 10 }}>
+      <div
+  style={{
+    padding: 12,
+    overflowY: "auto",          // ✅ scroll up/down
+    overflowX: "hidden",
+    flex: 1,                    // ✅ use remaining height under header
+    minHeight: 0,               // ✅ required for flex scroll in Chrome
+    display: "grid",
+    gap: 10,
+    WebkitOverflowScrolling: "touch",
+  }}
+>
+
         <Accordion
           title="Search & jump"
           open={secSearch}
