@@ -1120,8 +1120,9 @@ export default function App() {
       /target\s*pop/i,
       /targetpop/i,
       /population\s*target/i,
-      /target/i, // fallback (optional)
+      /target.*pop/i, // safer fallback
     ]),
+
 
 
     };
