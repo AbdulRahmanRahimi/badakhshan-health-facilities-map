@@ -1122,8 +1122,17 @@ export default function App() {
   const { pointsAfghanistan, excludedOutliers } = useMemo(() => {
     if (!rows.length) return { pointsAfghanistan: [], excludedOutliers: 0 };
 
-    const { latCol, lonCol, typeCol, nameCol, districtCol, hfCodeCol, villagesCol } =
-      meta;
+    const {
+      latCol,
+      lonCol,
+      typeCol,
+      nameCol,
+      districtCol,
+      hfCodeCol,
+      villagesCol,
+      targetPopCol,
+    } = meta;
+
 
     let id = 0;
     let excluded = 0;
