@@ -1116,10 +1116,13 @@ export default function App() {
       hfCodeCol: findColumnByHints(cols, [/hf code/i, /facility code/i, /code/i]),
       villagesCol: findColumnByHints(cols, [/villag/i, /cover.*vill/i, /no.*vill/i]),
       targetPopCol: findColumnByHints(cols, [
-      /target\s*population/i,
+      /^target\s*population$/i,
+      /target\s*pop/i,
       /targetpop/i,
       /population\s*target/i,
-]),
+      /target/i, // fallback (optional)
+    ]),
+
 
     };
   }, [rows]);
@@ -1647,6 +1650,8 @@ export default function App() {
           /* allow facility label to wrap when you show name + target pop */
           .facility-label--multi {
             white-space: normal;
+              line-height: 1.15;
+              max-width: 220px;
           }
           
           .district-label { font-size: 11px; }
