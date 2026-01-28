@@ -1115,6 +1115,12 @@ export default function App() {
       districtCol: findColumnByHints(cols, [/district/i]),
       hfCodeCol: findColumnByHints(cols, [/hf code/i, /facility code/i, /code/i]),
       villagesCol: findColumnByHints(cols, [/villag/i, /cover.*vill/i, /no.*vill/i]),
+      targetPopCol: findColumnByHints(cols, [
+      /target\s*population/i,
+      /targetpop/i,
+      /population\s*target/i,
+]),
+
     };
   }, [rows]);
 
@@ -1169,7 +1175,7 @@ export default function App() {
         const district = districtCol ? String(r[districtCol] ?? "").trim() : "";
         const hfCode = hfCodeCol ? String(r[hfCodeCol] ?? "").trim() : "";
         const villages = villagesCol ? r[villagesCol] : null;
-
+        const targetPop = targetPopCol ? r[targetPopCol] : null;
         return {
           ...r,
           _id: ++id,
@@ -1180,6 +1186,8 @@ export default function App() {
           _district: district,
           _hfCode: hfCode,
           _villages: villages,
+          _targetPop: targetPop,
+
         };
       })
       .filter(Boolean);
@@ -1649,7 +1657,8 @@ export default function App() {
             border: 2px solid rgba(0,0,0,0.55) !important;
           }
 
-      `}</style>
+      `}
+</style>
 
       <TopBar
         rowsCount={rows.length}
@@ -1792,16 +1801,25 @@ export default function App() {
                 }}
               >
                 {effectiveShowFacilityLabels && (
-                  <Tooltip
-                    permanent
-                    direction="top"
-                    offset={[0, -18]}
-                    className="facility-label facility-label--multi"
-                    opacity={0.95}
-                  >
-                    {p._name}
-                  </Tooltip>
-                )}
+                    <Tooltip
+                      permanent
+                      direction="top"
+                      offset={[0, -18]}
+                      className="facility-label facility-label--multi"
+                      opacity={0.95}
+                    >
+                      <div style={{ display: "grid", gap: 2, lineHeight: 1.1 }}>
+                        <div>{p._name}</div>
+                  
+                        {fmtInt(p._targetPop) && (
+                          <div style={{ fontWeight: 800, fontSize: 10, opacity: 0.85 }}>
+                            Target pop: {fmtInt(p._targetPop)}
+                          </div>
+                        )}
+                      </div>
+                    </Tooltip>
+                  )}
+
 
                 <Popup>
                   <div style={{ fontFamily: "Arial", fontSize: 13, lineHeight: 1.35, minWidth: 260 }}>
