@@ -50,10 +50,22 @@ const cleanHeader = (h) =>
     .trim();
 
 const toNumber = (v) => {
-  const n = Number(String(v ?? "").trim());
+  const s = String(v ?? "").trim();
+  if (!s) return null;
+  const cleaned = s.replace(/,/g, "").replace(/\s+/g, "");
+  const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 };
 
+const fmtInt = (v) => {
+  const n = toNumber(v);
+  if (n === null) return null;
+  try {
+    return new Intl.NumberFormat("en-CA").format(Math.round(n));
+  } catch {
+    return String(Math.round(n));
+  }
+};
 const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
 function findColumnByHints(columns, hints) {
@@ -474,11 +486,12 @@ function ControlDrawer({
   selectedDistrictSummary,
   onClearDistrict,
 }) {
-  const [secSearch, setSecSearch] = useState(true);
+  const [secSearch, setSecSearch] = useState(false);
   const [secMap, setSecMap] = useState(false);
-  const [secLayers, setSecLayers] = useState(true);
+  const [secLayers, setSecLayers] = useState(false);
   const [secTypes, setSecTypes] = useState(false);
   const [secDistrict, setSecDistrict] = useState(false);
+
 
   useEffect(() => {
     if (selectedDistrictSummary) setSecDistrict(true);
@@ -1599,23 +1612,34 @@ export default function App() {
   return (
     <div style={{ height: "100vh", width: "100%", position: "relative" }}>
       <style>{`
-        .district-label, .facility-label, .buffer-label {
-          font-family: Arial;
-          font-weight: 900;
-          border-radius: 10px;
-          padding: 2px 6px;
-          border: 1px solid rgba(0,0,0,0.22);
-          box-shadow: 0 2px 10px rgba(0,0,0,0.10);
-          background: rgba(255,255,255,0.90);
-          white-space: nowrap;
-        }
-        .district-label { font-size: 11px; }
-        .facility-label { font-size: 11px; }
-        .buffer-label   { font-size: 11px; }
+       .district-label, .facility-label, .buffer-label {
+            font-family: Arial;
+            font-weight: 900;
+            border-radius: 10px;
+            padding: 2px 6px;
+            border: 1px solid rgba(0,0,0,0.22);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.10);
+            background: rgba(255,255,255,0.90);
+          }
+          
+          /* keep district + buffer single-line */
+          .district-label, .buffer-label {
+            white-space: nowrap;
+          }
+          
+          /* allow facility label to wrap when you show name + target pop */
+          .facility-label--multi {
+            white-space: normal;
+          }
+          
+          .district-label { font-size: 11px; }
+          .facility-label { font-size: 11px; }
+          .buffer-label   { font-size: 11px; }
+          
+          .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
+            border: 2px solid rgba(0,0,0,0.55) !important;
+          }
 
-        .marker-cluster-small, .marker-cluster-medium, .marker-cluster-large {
-          border: 2px solid rgba(0,0,0,0.55) !important;
-        }
       `}</style>
 
       <TopBar
@@ -1763,7 +1787,7 @@ export default function App() {
                     permanent
                     direction="top"
                     offset={[0, -18]}
-                    className="facility-label"
+                    className="facility-label facility-label--multi"
                     opacity={0.95}
                   >
                     {p._name}
@@ -1796,6 +1820,12 @@ export default function App() {
                           <tr>
                             <td style={{ fontWeight: 900, paddingRight: 8 }}>Villages</td>
                             <td>{Math.round(villages)}</td>
+                          </tr>
+                        ) : null}
+                        {fmtInt(p._targetPop) ? (
+                          <tr>
+                            <td style={{ fontWeight: 900, paddingRight: 8 }}>Target pop</td>
+                            <td>{fmtInt(p._targetPop)}</td>
                           </tr>
                         ) : null}
                         <tr>
