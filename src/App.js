@@ -23,10 +23,10 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
    DATA SOURCES (RAW GitHub)
 ========================= */
 const DATA_URL =
-  "https://raw.githubusercontent.com/rahimiabdulrahmanab/Mapping-Project-NGO-/main/Data.csv";
+  `${process.env.PUBLIC_URL}/data/Data.csv`;
 
 const ADM2_GEOJSON_URL =
-  "https://raw.githubusercontent.com/rahimiabdulrahmanab/Mapping-Project-NGO-/main/geoBoundaries-AFG-ADM2_simplified.geojson";
+  `${process.env.PUBLIC_URL}/data/geoBoundaries-AFG-ADM2_simplified.geojson`;
 
 /* =========================
    MAP SETTINGS

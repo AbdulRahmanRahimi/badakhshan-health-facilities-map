@@ -22,6 +22,10 @@ A web GIS app that maps an NGO's health facilities and project coverage by distr
 | Spatial analysis | Turf.js |
 | Data | PapaParse (CSV), GeoJSON (ADM2 districts) |
 
+## Data
+
+The facility list and simplified ADM2 district boundaries are in [`public/data/`](public/data/). The boundaries come from [geoBoundaries](https://www.geoboundaries.org) (see the metadata file for the licence).
+
 ## Run locally
 
 ```bash
