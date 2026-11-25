@@ -1,6 +1,8 @@
-# NGO Project Mapping
+# Badakhshan Health Facilities Map
 
-A web GIS app that maps an NGO's health facilities and project coverage by district, with spatial analysis done in the browser.
+A web GIS app mapping **116 health facilities across 29 districts of Badakhshan province, Afghanistan**, and the people and villages they serve. It was built for HSDO's health programme.
+
+The facilities range from sub-health centres and basic and comprehensive health centres to district hospitals and the provincial hospital. Each one carries its target population, villages covered, health posts, staff numbers (including female staff), nutrition counsellors and referral facility.
 
 **Live demo:** https://mapping-project-ngo.vercel.app
 
